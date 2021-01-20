@@ -1,0 +1,1 @@
+web: java $JVM_OPTS -cp target/designvote.jar clojure.main -m designvote.server "resources/config.edn"
