@@ -9,7 +9,10 @@
             [reitit.ring.middleware.exception :as exception]
             [reitit.dev.pretty :as pretty]
             [reitit.ring.spec :as rs]
-            [reitit.ring.middleware.dev :as dev]))
+            [reitit.ring.middleware.dev :as dev]
+            [designvote.middleware :as mw]
+            [designvote.account.routes :as account]
+            [designvote.design.routes :as design]))
 
 (def swagger-docs
   ["/swagger.json"
@@ -22,15 +25,16 @@
      :handler (swagger/create-swagger-handler)}}])
 
 (def router-config
-  {;:reitit.middleware/transform dev/print-request-diffs ;; This is for debugging purposes
-   :validate                    rs/validate
-   :exception                   pretty/exception
-   :data                        {:coercion   coercion-spec/coercion
-                                 :muuntaja   m/instance
-                                 :middleware [swagger/swagger-feature
-                                              muuntaja/format-middleware
-                                              coercion/coerce-request-middleware
-                                              coercion/coerce-response-middleware]}})
+  {:reitit.middleware/transform dev/print-request-diffs ;; This is for debugging purposes
+   :validate  rs/validate
+   :exception pretty/exception
+   :data      {:coercion   coercion-spec/coercion
+               :muuntaja   m/instance
+               :middleware [swagger/swagger-feature
+                            muuntaja/format-middleware
+                            coercion/coerce-request-middleware
+                            coercion/coerce-response-middleware
+                            mw/exception-middleware]}})
 
 (defn routes
   [env]
@@ -38,6 +42,8 @@
     (ring/router
       [swagger-docs
        ["/v1"
+        (design/routes env)
+        (account/routes env)
         ]]
       router-config)
     (ring/routes
