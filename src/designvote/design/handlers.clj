@@ -43,7 +43,7 @@
     (let [design-id (-> request :parameters :path :design-id)
           deleted? (designs-db/delete-design! db {:design-id design-id})]
       (if deleted?
-        (rr/response 204)
+        (rr/status 204)
         (rr/not-found {:type    "design-not-found"
                        :message "Design not found"
                        :data    (str "design-id" design-id)}))
@@ -56,27 +56,33 @@
           design (-> request :parameters :body)
           updated? (designs-db/update-design! db (assoc design :design-id design-id))]
       (if updated?
-        (rr/response 204)
+        (rr/status 204)
         (rr/not-found {:type    "design-not-found"
                        :message "Design not found"
                        :data    (str "design-id" design-id)}))
       )))
 
 
-(defn add-design-option!
+(defn add-design-version!
   [db]
   (fn [request]
-    (let [option-id (str (UUID/randomUUID))
+    (let [version-id (str (UUID/randomUUID))
           design-id (-> request :parameters :path :design-id)
-          option (-> request :parameters :body)]
-      (designs-db/insert-design-option! db (assoc option :design-id design-id
-                                                 :option-id option-id))
-      (rr/created (str responses/base-url "/designs/" design-id) {:option-id option-id}))))
+          version (-> request :parameters :body)
+          created? (designs-db/insert-design-version! db (assoc version :design-id design-id
+                                                                      :version-id version-id))]
+      (if created? (rr/created (str responses/base-url "/designs/" design-id) {:version-id version-id})
+                   {:status  500
+                    :headers {}
+                    :body    {:message "Something went wrong. Please try again"}}))))
 
-(defn update-design-option!
+(defn update-design-version!
   [db]
   (fn [request]
     (let [design-id (-> request :parameters :path :design-id)
-          option (-> request :parameters :body)]
-      (designs-db/update-design-option! db (assoc option :design-id design-id))
-      (rr/created (str responses/base-url "/designs/" design-id)))))
+          version (-> request :parameters :body)
+      updated? (designs-db/update-design-version! db (assoc version :design-id design-id))]
+      (if updated? (rr/status 204)
+                   (rr/not-found {:type    "version-not-found"
+                                  :message "Design version not found"
+                                  :data    (str "version-id" (:version-id version))})  ))))

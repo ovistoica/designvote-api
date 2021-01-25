@@ -1,6 +1,7 @@
 (ns designvote.design.db
   (:require [next.jdbc.sql :as sql]
-            [next.jdbc :as jdbc]))
+            [next.jdbc :as jdbc])
+  (:import java.util.UUID))
 
 
 (defn find-all-designs!
@@ -10,14 +11,13 @@
           public (sql/find-by-keys conn-opts :design {:public true})]
       (if uid
         (let [drafts (sql/find-by-keys conn-opts :design {:public false
-                                                     :uid    uid})]
+                                                          :uid    uid})]
           {:public public
            :drafts drafts})
         {:public public}))))
 
 (defn insert-design!
   [db design]
-  (println design)
   (sql/insert! db :design design))
 
 (defn find-design-by-id!
@@ -26,15 +26,18 @@
     (let [conn-opts (jdbc/with-options conn (:options db))
           [design] (sql/find-by-keys conn-opts :design
                                      {:design-id design-id})
-          options (sql/find-by-keys conn-opts :design_option
-                                    {:design-id design-id})]
-      (assoc design :options
-                    (doall (for [{:design-option/keys [option-id & rest] :as option} options
-                                 :let [pictures
-                                       (sql/find-by-keys conn-opts
-                                                         :picture
-                                                         {:option-id option-id})]]
-                             (assoc rest :option-id option-id :pictures pictures)))))))
+          versions (sql/find-by-keys conn-opts :design-version
+                                     {:design-id design-id})]
+      (if versions (assoc design :versions
+                                 (into []
+                                       (doall (for [version versions
+                                                    :let [pictures
+                                                          (sql/find-by-keys
+                                                            conn-opts
+                                                            :picture
+                                                            {:version-id (:design-version/version-id version)})]]
+                                                (assoc version :pictures pictures)))))
+                   design))))
 
 
 (defn update-design!
@@ -49,15 +52,22 @@
       :next.jdbc/update-count
       (pos?)))
 
-(defn insert-design-option!
-  [db [{:keys [pictures & option]}]]
-  option
-  )
+(defn insert-design-version!
+  [db version]
+  (let [{:keys [pictures]} version
+        design-version (dissoc version :pictures)
+        db-pictures (into [] (map (fn [pic] [pic (:version-id version) (str (UUID/randomUUID))])
+                                  pictures))]
+    (jdbc/with-transaction
+      [tx db]
+      (sql/insert! tx :design-version design-version (:options db))
+      (sql/insert-multi! tx :picture [:uri :version-id :picture-id] db-pictures (:options db)))))
 
-(defn update-design-option!
-  [db [{:keys [pictures & option]}]]
-  option
-  )
+(defn update-design-version!
+  [db version]
+  (-> (sql/update! db :design-version version (select-keys version [:version-id]))
+      :next.jdbc/update-count
+      (pos?)))
 
 (comment
   )

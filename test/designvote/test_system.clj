@@ -10,16 +10,16 @@
 
 (defn get-test-token
   [email]
-  (->> {:content-type  :json
+  (->> {:content-type     :json
         :throw-exceptions false
-        :cookie-policy :standard
-        :body          (m/encode "application/json"
-                                 {:client_id  "Fx9nSRZtW7L5Rk9tiRZT1bl97RoK1b1H"
-                                  :audience   "https://designvote.eu.auth0.com/api/v2/"
-                                  :grant_type "password"
-                                  :username   email
-                                  :password   "Sepulcral94"
-                                  :scope      "openid profile email"})}
+        :cookie-policy    :standard
+        :body             (m/encode "application/json"
+                                    {:client_id  "Fx9nSRZtW7L5Rk9tiRZT1bl97RoK1b1H"
+                                     :audience   "https://designvote.eu.auth0.com/api/v2/"
+                                     :grant_type "password"
+                                     :username   email
+                                     :password   "Sepulcral94"
+                                     :scope      "openid profile email"})}
        (http/post "https://designvote.eu.auth0.com/oauth/token")
        (m/decode-response-body)
        :access_token))
@@ -47,8 +47,9 @@
    (let [app (-> state/system :designvote/app)
          request (app (-> (mock/request method uri)
                           (cond-> (:auth opts)
-                                  (mock/header :authorization (str "Bearer "
-                                                                   (or @token (get-test-token "account-testing@designvote.io"))))
+                                  (mock/header
+                                    :authorization (str "Bearer "
+                                                        (or @token (get-test-token "testing@designvote.io"))))
                                   (:body opts) (mock/json-body (:body opts)))))]
      (update request :body (partial m/decode "application/json")))))
 
@@ -61,7 +62,7 @@
                                       :prep-time 30})
 
 
-  (test-endpoint :get "/v1/designs" {:auth true })
+  (test-endpoint :get "/v1/designs" {:auth true})
   (test-endpoint :post "/v1/designs" {:auth true :body {:name        "My new design"
                                                         :description "Helooo design"
                                                         :img         "My image"
@@ -69,5 +70,5 @@
   (test-endpoint :get "/v1/designs/89985a6c-6864-4a43-9e90-b92aee727048")
   (get-test-token "testing@designvote.io")
   (create-auth0-user {:connection "Username-Password-Authentication"
-                     :email      "account-testing@designvote.io"
-                     :password   "Sepulcral94"}))
+                      :email      "account-testing@designvote.io"
+                      :password   "Sepulcral94"}))

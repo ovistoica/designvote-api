@@ -26,29 +26,32 @@
                  :parameters {:path {:design-id string?}}
                  :summary    "Retrieve design"}
         :put    {:handler    (design/update-design! db)
+                 :middleware [[mw/wrap-design-owner db]]
                  :responses  {204 {:body nil?}}
                  :parameters {:path {:design-id string?}
                               :body {:name        string?
                                      :description string?
-                                     :img         string?}}
-                 :summary "Update design"}
+                                     :img         string?
+                                     :public      boolean?}}
+                 :summary    "Update design"}
         :delete {:handler    (design/delete-design! db)
+                 :middleware [[mw/wrap-design-owner db]]
                  :responses  {204 {:body nil?}}
                  :parameters {:path {:design-id string?}}
-                 :summary "Delete design"}}]
-      ["/options" {:middleware [[mw/wrap-design-owner db]]}
+                 :summary    "Delete design"}}]
+      ["/versions" {:middleware [[mw/wrap-design-owner db]]}
        [""
-        {:post {:handler    (design/add-design-option! db)
-                :responses  {201 {:body {:option-id string?}}}
-                :parameters {:body {:name        string?
+        {:post {:handler    (design/add-design-version! db)
+                :responses  {201 {:body {:version-id string?}}}
+                :parameters {:path {:design-id string?}
+                             :body {:name        string?
                                     :pictures    vector?
                                     :description string?}}
-                :summary    "Create a design option"}
-         :put  {:handler    (design/update-design-option! db)
+                :summary    "Create a design version"}
+         :put  {:handler    (design/update-design-version! db)
                 :responses  {204 {:body nil?}}
-                :parameters {:body {:option-id   string?
+                :parameters {:body {:version-id   string?
                                     :name        string?
-                                    :picture     vector?
                                     :description string?}}
-                :summary    "Update a design option"}}]]]]))
+                :summary    "Update a design version"}}]]]]))
 

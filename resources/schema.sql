@@ -3,6 +3,7 @@ drop table if exists vote;
 drop table if exists picture;
 
 drop table if exists design_option;
+drop table if exists design_version;
 drop table if exists design;
 
 drop table if exists account;
@@ -28,9 +29,9 @@ CREATE TABLE design
 );
 
 
-CREATE TABLE design_option
+CREATE TABLE design_version
 (
- option_id   text NOT NULL PRIMARY KEY,
+ version_id   text NOT NULL PRIMARY KEY,
  name        text NOT NULL,
  description text,
  design_id   text NOT NULL REFERENCES design(design_id) ON DELETE CASCADE,
@@ -42,12 +43,12 @@ CREATE TABLE picture
 (
  picture_id text NOT NULL PRIMARY KEY,
  "uri"      text NOT NULL,
- option_id  text NOT NULL REFERENCES design_option (option_id)
+ version_id  text NOT NULL REFERENCES design_version (version_id) ON DELETE CASCADE
 );
 
 CREATE TABLE vote
 (
  vote_id   serial NOT NULL PRIMARY KEY,
  opinion   text,
- option_id text NOT NULL REFERENCES design_option(option_id)
+ version_id text NOT NULL REFERENCES design_version (version_id) ON DELETE CASCADE
 );
