@@ -2,7 +2,7 @@
 truncate table account cascade;
 insert into account ("uid", "name")
 values ('auth0|5ef440986e8fbb001355fd9c', 'Auth0'),
-       ('auth0|600067b95483dd006954c931', 'testing@designvote.app'),
+       ('auth0|600911488e5f53006a80f83d', 'testing@designvote.io'),
        ('mike@mailinator.com', 'Mike'),
        ('jade@mailinator.com', 'Jade'),
        ('mark@mailinator.com', 'Mark');

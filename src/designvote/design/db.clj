@@ -6,9 +6,10 @@
 (defn find-all-designs!
   [db uid]
   (with-open [conn (jdbc/get-connection db)]
-    (let [public (sql/find-by-keys conn :design {:public true})]
+    (let [conn-opts (jdbc/with-options conn (:options db))
+          public (sql/find-by-keys conn-opts :design {:public true})]
       (if uid
-        (let [drafts (sql/find-by-keys conn :design {:public false
+        (let [drafts (sql/find-by-keys conn-opts :design {:public false
                                                      :uid    uid})]
           {:public public
            :drafts drafts})
@@ -16,6 +17,7 @@
 
 (defn insert-design!
   [db design]
+  (println design)
   (sql/insert! db :design design))
 
 (defn find-design-by-id!

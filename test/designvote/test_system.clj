@@ -3,13 +3,15 @@
             [integrant.repl.state :as state]
             [ring.mock.request :as mock]
             [muuntaja.core :as m]
-            [clj-http.client :as http]))
+            [clj-http.client :as http]
+            [designvote.auth0 :as auth0]))
 
 (def token (atom nil))
 
 (defn get-test-token
   [email]
   (->> {:content-type  :json
+        :throw-exceptions false
         :cookie-policy :standard
         :body          (m/encode "application/json"
                                  {:client_id  "Fx9nSRZtW7L5Rk9tiRZT1bl97RoK1b1H"
@@ -22,7 +24,7 @@
        (m/decode-response-body)
        :access_token))
 
-#_(defn create-auth0-user
+(defn create-auth0-user
   [{:keys [connection email password]}]
   (let [auth0 (-> state/system :auth/auth0)]
     (->> {:headers          {"Authorization" (str "Bearer " (auth0/get-management-token auth0))}
@@ -34,7 +36,7 @@
                                        :email      email
                                        :password   password})
           }
-         (http/post "https://dev-ovidiu.eu.auth0.com/api/v2/users")
+         (http/post "https://designvote.eu.auth0.com/api/v2/users")
          (m/decode-response-body))))
 
 
@@ -46,7 +48,7 @@
          request (app (-> (mock/request method uri)
                           (cond-> (:auth opts)
                                   (mock/header :authorization (str "Bearer "
-                                                                   (or @token (get-test-token "testing@designvote.io"))))
+                                                                   (or @token (get-test-token "account-testing@designvote.io"))))
                                   (:body opts) (mock/json-body (:body opts)))))]
      (update request :body (partial m/decode "application/json")))))
 
@@ -59,6 +61,13 @@
                                       :prep-time 30})
 
 
-  (test-endpoint :get "/v1/designs" {:auth true})
-  (test-endpoint :get "/v1/designs/a1995316-80ea-4a98-939d-7c6295e4bb46" {})
-  (get-test-token "testing@designvote.io"))
+  (test-endpoint :get "/v1/designs" {:auth true })
+  (test-endpoint :post "/v1/designs" {:auth true :body {:name        "My new design"
+                                                        :description "Helooo design"
+                                                        :img         "My image"
+                                                        }})
+  (test-endpoint :get "/v1/designs/89985a6c-6864-4a43-9e90-b92aee727048")
+  (get-test-token "testing@designvote.io")
+  (create-auth0-user {:connection "Username-Password-Authentication"
+                     :email      "account-testing@designvote.io"
+                     :password   "Sepulcral94"}))

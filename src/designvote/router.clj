@@ -25,7 +25,7 @@
      :handler (swagger/create-swagger-handler)}}])
 
 (def router-config
-  {:reitit.middleware/transform dev/print-request-diffs ;; This is for debugging purposes
+  {;:reitit.middleware/transform dev/print-request-diffs ;; This is for debugging purposes
    :validate  rs/validate
    :exception pretty/exception
    :data      {:coercion   coercion-spec/coercion

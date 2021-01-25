@@ -9,7 +9,7 @@
     ["/account" {:swagger    {:tags ["account"]}
                  :middleware [[mw/wrap-auth0]]}
      [""
-      {:post   {:handler   (account/create-account! db)
+      {:post   {:handler   (account/create-account! db auth0)
                 :responses {201 {:body nil?}}
                 :summary   "Create an account"}
        :delete {:handler   (account/delete-account! db auth0)

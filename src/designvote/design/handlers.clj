@@ -16,12 +16,13 @@
 (defn create-design!
   [db]
   (fn [request]
-    (let [design-id ((str (UUID/randomUUID)))
+    (let [design-id (str (UUID/randomUUID))
           uid (-> request :claims :sub)
           design (-> request :parameters :body)]
       (designs-db/insert-design! db (assoc design :uid uid
-                                                  :design-id design-id))
-      (rr/created (str responses/base-url "/designs/" design-id)))))
+                                                  :design-id design-id
+                                                  :public false))
+      (rr/created (str responses/base-url "/designs/" design-id) {:design-id design-id}))))
 
 
 (defn retrieve-design!
@@ -70,7 +71,7 @@
           option (-> request :parameters :body)]
       (designs-db/insert-design-option! db (assoc option :design-id design-id
                                                  :option-id option-id))
-      (rr/created (str responses/base-url "/designs/" design-id)))))
+      (rr/created (str responses/base-url "/designs/" design-id) {:option-id option-id}))))
 
 (defn update-design-option!
   [db]
