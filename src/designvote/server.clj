@@ -37,11 +37,12 @@
 (defmethod ig/init-key :db/postgres
   [_ {:keys [jdbc-url]}]
   (println (str "\nConfigured db " jdbc-url))
-  #_(jdbc/with-options
-    (njc/->pool HikariDataSource {:jdbcUrl jdbc-url}) jdbc/snake-kebab-opts)
-  (jdbc/with-options jdbc-url jdbc/snake-kebab-opts))
+  (jdbc/with-options
+    (njc/->pool HikariDataSource {:jdbcUrl jdbc-url}) jdbc/unqualified-snake-kebab-opts)
+  #_(jdbc/with-options jdbc-url jdbc/unqualified-snake-kebab-opts))
 
-#_(defmethod ig/halt-key! :db/postgres
+
+(defmethod ig/halt-key! :db/postgres
   [_ config]
   (.close ^HikariDataSource (:connectable config)))
 

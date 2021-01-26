@@ -19,8 +19,8 @@
 (use-fixtures :once token-fixture)
 
 (def design-id (atom nil))
-
 (def version-id (atom nil))
+(def vote-id (atom nil))
 
 (def design
   {:name        "My new design"
@@ -71,8 +71,29 @@
 
   (testing "Update design version"
     (let [{:keys [status]} (ts/test-endpoint :put (str "/v1/designs/" @design-id "/versions")
-                                                  {:auth true :body (assoc new-version
-                                                                      :version-id @version-id)})]
+                                             {:auth true :body (assoc new-version
+                                                                 :version-id @version-id)})]
+      (is (= status 204))))
+
+  (testing "Vote design version"
+    (let [{:keys [status body]} (ts/test-endpoint :post (str "/v1/designs/" @design-id "/votes")
+                                             {:auth true :body {:version-id @version-id
+                                                                :opinion    "It was really good"}})]
+      (is (= status 201))
+      (is (string? (:vote-id body)))
+      (reset! vote-id (:vote-id body))
+      (is (= (:design-id body) @design-id))
+      (is (= (:version-id body) @version-id))))
+
+  (testing "Unvote design version"
+    (let [{:keys [status]} (ts/test-endpoint :delete (str "/v1/designs/" @design-id "/votes")
+                                                  {:auth true :body {:version-id @version-id
+                                                                     :vote-id @vote-id}})]
+      (is (= status 204))))
+
+  (testing "Delete design version"
+    (let [{:keys [status]} (ts/test-endpoint :delete (str "/v1/designs/" @design-id "/versions")
+                                             {:auth true :body {:version-id @version-id}})]
       (is (= status 204))))
 
 
@@ -85,11 +106,11 @@
 (comment
   (println update-design)
   (ts/test-endpoint :post "/v1/designs" {:auth true :body design})
-  (ts/test-endpoint :post (str "/v1/designs/f012da67-4172-4205-8011-31a69527107d/options")
-                    {:auth true :body option})
-  (ts/test-endpoint :put (str "/v1/designs/f012da67-4172-4205-8011-31a69527107d/options")
+  (ts/test-endpoint :post (str "/v1/designs/710d10e9-6585-43a4-871b-c4bf532f2313/versions")
+                    {:auth true :body version})
+  (ts/test-endpoint :put (str "/v1/designs/f012da67-4172-4205-8011-31a69527107d/versions")
                     {:auth true :body (assoc)})
-  (ts/test-endpoint :get "/v1/designs/f012da67-4172-4205-8011-31a69527107d" {:auth true})
+  (ts/test-endpoint :get "/v1/designs/710d10e9-6585-43a4-871b-c4bf532f2313" {:auth true})
   (ts/test-endpoint :put "/v1/designs/c5a1674e-fb49-493f-b221-f5e44609174d" {:auth true
                                                                              :body update-design})
   (ts/test-endpoint :delete "/v1/recipes/be49e960-f5da-4a2e-8375-448901401ce7" {:auth true}))

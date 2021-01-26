@@ -75,9 +75,12 @@
   (reset)
 
   (design-db/insert-design-version! db u-option)
+  (design-db/vote-design-version! db {:design-id "710d10e9-6585-43a4-871b-c4bf532f2313"
+                                      :version-id "aa0300a3-2de3-450d-bf08-bccc7dbede84"
+                                      :opinion "It is good"})
 
 
-  (design-db/find-design-by-id! db "6049ca50-ec0f-4bf3-8950-1a3ce1194bec")
+  (design-db/find-design-by-id! db "710d10e9-6585-43a4-871b-c4bf532f2313")
 
 
   ()

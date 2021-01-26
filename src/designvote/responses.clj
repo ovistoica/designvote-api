@@ -4,26 +4,26 @@
 
 (def base-url "https://designvote.io")
 
-(def picture {:picture/uri        string?
-              :picture/picture-id string?})
+(def picture {:uri        string?
+              :picture-id string?})
 
-(def vote {:vote/option-id string?
-           :vote/opinion   string?})
+(def vote {:version-id string?
+           :opinion   string?})
 
-(def option {:option/design-id         string?
-             :option/name              string?
-             :option/description       string?
-             (ds/opt :option/pictures) [picture]
-             (ds/opt :option/votes)    [vote]
+(def version {:design-id         string?
+             :name              string?
+             :description       string?
+             (ds/opt :pictures) [picture]
+             (ds/opt :votes)    [vote]
              })
 
 (def design
-  {:design/name             string?
-   :design/description      (s/nilable string?)
-   :design/uid              string?
-   :design/public           boolean?
-   :design/total-votes      int?
-   (ds/opt :design/options) [option]})
+  {:name             string?
+   :description      (s/nilable string?)
+   :uid              string?
+   :public           boolean?
+   :total-votes      int?
+   (ds/opt :versions) [version]})
 
 (def designs
   {:public          [design]

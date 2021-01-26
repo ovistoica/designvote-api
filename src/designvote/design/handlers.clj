@@ -70,7 +70,7 @@
           design-id (-> request :parameters :path :design-id)
           version (-> request :parameters :body)
           created? (designs-db/insert-design-version! db (assoc version :design-id design-id
-                                                                      :version-id version-id))]
+                                                                        :version-id version-id))]
       (if created? (rr/created (str responses/base-url "/designs/" design-id) {:version-id version-id})
                    {:status  500
                     :headers {}
@@ -81,8 +81,41 @@
   (fn [request]
     (let [design-id (-> request :parameters :path :design-id)
           version (-> request :parameters :body)
-      updated? (designs-db/update-design-version! db (assoc version :design-id design-id))]
+          updated? (designs-db/update-design-version! db (assoc version :design-id design-id))]
       (if updated? (rr/status 204)
-                   (rr/not-found {:type    "version-not-found"
-                                  :message "Design version not found"
-                                  :data    (str "version-id" (:version-id version))})  ))))
+                   (rr/bad-request {:version-id (:version-id version)})))))
+
+(defn delete-design-version!
+  [db]
+  (fn [request]
+    (let [version-id (-> request :parameters :body :version-id)
+          deleted? (designs-db/delete-design-version! db {:version-id version-id})]
+      (if deleted?
+        (rr/status 204)
+        (rr/bad-request {:version-id version-id}))
+      )))
+
+(defn vote-design!
+  [db]
+  (fn [request]
+    (let [uid (-> request :claims :sub)
+          design-id (-> request :parameters :path :design-id)
+          version-id (-> request :parameters :body :version-id)
+          vote-id (str (UUID/randomUUID))]
+      (designs-db/vote-design-version! db {:vote-id    vote-id
+                                           :uid        (or uid nil)
+                                           :version-id version-id
+                                           :design-id  design-id})
+      (rr/created (str responses/base-url "/designs/" design-id) {:design-id  design-id
+                                                                  :version-id version-id
+                                                                  :vote-id    vote-id}))))
+
+(defn unvote-design!
+  [db]
+  (fn [request]
+    (let [vote (-> request :parameters :body)
+          design-id (-> request :parameters :path :design-id)
+          deleted? (designs-db/unvote-design-version! db (assoc vote :design-id design-id))]
+      (if deleted?
+        (rr/status 204)
+        (rr/bad-request {:vote-id (:vote-id vote)})))))

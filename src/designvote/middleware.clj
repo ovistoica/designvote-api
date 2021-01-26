@@ -57,7 +57,7 @@
                     (let [uid (-> request :claims :sub)
                           design-id (-> request :parameters :path :design-id)
                           design (design-db/find-design-by-id! db design-id)]
-                      (if (= (:design/uid design) uid)
+                      (if (= (:uid design) uid)
                         (handler request)
                         (-> (rr/response {:message "You need to be the design owner"
                                           :data    (str "design-id " design-id)

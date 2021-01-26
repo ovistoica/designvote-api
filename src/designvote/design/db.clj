@@ -30,13 +30,13 @@
                                      {:design-id design-id})]
       (if versions (assoc design :versions
                                  (into []
-                                       (doall (for [version versions
+                                       (doall (for [{:keys [version-id] :as version} versions
                                                     :let [pictures
-                                                          (sql/find-by-keys
-                                                            conn-opts
-                                                            :picture
-                                                            {:version-id (:design-version/version-id version)})]]
-                                                (assoc version :pictures pictures)))))
+                                                          (sql/find-by-keys conn-opts :picture
+                                                                            {:version-id version-id})
+                                                          votes (sql/find-by-keys conn-opts :vote
+                                                                                  {:version-id version-id})]]
+                                                (assoc version :pictures pictures :votes votes)))))
                    design))))
 
 
@@ -68,6 +68,34 @@
   (-> (sql/update! db :design-version version (select-keys version [:version-id]))
       :next.jdbc/update-count
       (pos?)))
+
+(defn delete-design-version!
+  [db design-version]
+  (-> (sql/delete! db :design-version design-version)
+      :next.jdbc/update-count
+      (pos?)))
+
+(defn vote-design-version!
+  [db {:keys [version-id design-id] :as data}]
+  (jdbc/with-transaction [tx db]
+                         (sql/insert! tx :vote (select-keys data [:version-id :opinion :vote-id]) (:options db))
+                         (jdbc/execute-one! tx ["UPDATE design
+                            SET total_votes = total_votes + 1
+                            WHERE design_id = ?" design-id])
+                         (jdbc/execute-one! tx ["UPDATE design_version
+                            SET votes = votes + 1
+                            WHERE version_id = ?" version-id])))
+
+(defn unvote-design-version!
+  [db {:keys [version-id design-id vote-id]}]
+  (jdbc/with-transaction [tx db]
+                         (sql/delete! tx :vote {:vote-id vote-id} (:options db))
+                         (jdbc/execute-one! tx ["UPDATE design
+                            SET total_votes = total_votes - 1
+                            WHERE design_id = ?" design-id])
+                         (jdbc/execute-one! tx ["UPDATE design_version
+                            SET votes = votes - 1
+                            WHERE version_id = ?" version-id])))
 
 (comment
   )
