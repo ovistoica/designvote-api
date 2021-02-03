@@ -12,7 +12,8 @@
             [reitit.ring.middleware.dev :as dev]
             [designvote.middleware :as mw]
             [designvote.account.routes :as account]
-            [designvote.design.routes :as design]))
+            [designvote.design.routes :as design]
+            [ring.middleware.cors :as  cors]))
 
 (def swagger-docs
   ["/swagger.json"
@@ -36,6 +37,13 @@
                             coercion/coerce-response-middleware
                             mw/exception-middleware]}})
 
+(defn cors-middleware
+  "Middleware to allow different origins"
+  [handler]
+  (cors/wrap-cors handler
+             :access-control-allow-origin [#"http://localhost:3000"]
+             :access-control-allow-methods [:get :put :post :delete]))
+
 (defn routes
   [env]
   (ring/ring-handler
@@ -47,4 +55,5 @@
         ]]
       router-config)
     (ring/routes
-      (swagger-ui/create-swagger-ui-handler {:path "/"}))))
+      (swagger-ui/create-swagger-ui-handler {:path "/"}))
+    {:middleware [cors-middleware]}))

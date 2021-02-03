@@ -20,6 +20,7 @@
 (defmethod ig/prep-key :db/postgres
   [_ config]
   (merge config {:jdbc-url (env :jdbc-database-url)}))
+
 (defmethod ig/prep-key :auth/auth0
   [_ config]
   (merge config {:client-secret (env :auth0-client-secret)}))
