@@ -21,11 +21,18 @@
       (rr/status 201))))
 
 (defn create-account!
-  [db auth0]
+  [db]
   (fn [request]
-    (let [body (-> request :parameters :body)]
-      (println body)
-      (rr/created (str responses/base-url "/accounts/test") (or body {:test "passed"})))))
+    (let [body (-> request :parameters :body)
+          user (dissoc body :token)
+          token (:token body)]
+      (if (= token "VIZFDFAlCzwze9g")
+        (do (account-db/create-account! db user)
+            (rr/created (str responses/base-url "/accounts/" (:uid user)) user))
+        {:status  401
+         :headers {}
+         :body    {:message "Unauthorised"}})
+      )))
 
 
 

@@ -1,11 +1,11 @@
 -- account
 truncate table account cascade;
-insert into account ("uid", "name")
-values ('auth0|5ef440986e8fbb001355fd9c', 'Auth0'),
-       ('auth0|600ef45e7038e20071c89994', 'testing@designvote.io'),
-       ('mike@mailinator.com', 'Mike'),
-       ('jade@mailinator.com', 'Jade'),
-       ('mark@mailinator.com', 'Mark');
+insert into account ("uid", "name", "email")
+values ('auth0|5ef440986e8fbb001355fd9c', 'Auth0', 'auth@designvote.io'),
+       ('auth0|600ef45e7038e20071c89994', 'testing@designvote.io', 'testing@designvote.io'),
+       ('mike@mailinator.com', 'Mike', 'mike@designvote.io'),
+       ('jade@mailinator.com', 'Jade', 'jade@mailinator.com'),
+       ('mark@mailinator.com', 'Mark', 'mark@mailinator.com');
 
 -- design
 truncate table design cascade;

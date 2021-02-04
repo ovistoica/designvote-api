@@ -12,9 +12,13 @@ drop table if exists account;
 -- Create Schema
 CREATE TABLE account
 (
- uid     text NOT NULL PRIMARY KEY,
- name    text NOT NULL,
- picture text
+ uid        text    NOT NULL PRIMARY KEY,
+ name       text    NOT NULL,
+ email      text    NOT NULL,
+ nickname   text,
+ social     boolean DEFAULT FALSE,
+ picture    text,
+ provider   text
 );
 
 CREATE TABLE design
