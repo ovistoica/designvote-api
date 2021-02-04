@@ -6,11 +6,11 @@
   [env]
   (let [db (:jdbc-url env)
         auth0 (:auth0 env)]
-    ["/account" {:swagger    {:tags ["account"]}
-                 :middleware [[mw/wrap-auth0]]}
+    ["/account" {:swagger    {:tags ["account"]} }
      [""
       {:post   {:handler   (account/create-account! db auth0)
-                :responses {201 {:body nil?}}
+                :responses {201 {:body any?}}
+                :parameters {:body any?}
                 :summary   "Create an account"}
        :delete {:handler   (account/delete-account! db auth0)
                 :responses {204 {:body nil?}}

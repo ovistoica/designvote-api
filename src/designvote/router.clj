@@ -13,7 +13,7 @@
             [designvote.middleware :as mw]
             [designvote.account.routes :as account]
             [designvote.design.routes :as design]
-            [ring.middleware.cors :as  cors]))
+            [ring.middleware.cors :as cors]))
 
 (def swagger-docs
   ["/swagger.json"
@@ -40,9 +40,31 @@
 (defn cors-middleware
   "Middleware to allow different origins"
   [handler]
-  (cors/wrap-cors handler
-             :access-control-allow-origin [#"http://localhost:3000"]
-             :access-control-allow-methods [:get :put :post :delete]))
+  (cors/wrap-cors handler :access-control-allow-origin [#".*"]
+                  :access-control-allow-methods [:get :put :post :delete]))
+
+
+;#"52.28.45.240",
+;#"52.16.224.164",
+;#"52.16.193.66",
+;#"34.253.4.94",
+;#"52.50.106.250",
+;#"52.211.56.181",
+;#"52.213.38.246",
+;#"52.213.74.69",
+;#"52.213.216.142",
+;#"35.156.51.163",
+;#"35.157.221.52",
+;#"52.28.184.18",
+;#"52.28.212.16",
+;#"52.29.176.99",
+;#"52.57.230.214",
+;#"54.76.184.103",
+;#"52.210.122.50",
+;#"52.208.95.174",
+;#"52.210.122.50",
+;#"52.208.95.174",
+;#"54.76.184.103"]
 
 (defn routes
   [env]

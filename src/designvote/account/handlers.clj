@@ -3,21 +3,30 @@
             [designvote.account.db :as account-db]
             [clj-http.client :as http]
             [designvote.auth0 :as auth0]
-            [muuntaja.core :as m]))
+            [muuntaja.core :as m]
+            [designvote.responses :as responses]))
 
 ;; After an account has been created in auth0, store it
 ;; in the local DB
-(defn create-account!
+(defn create-account2!
   [db auth0]
   (fn [request]
     (let [{:keys [sub]} (-> request :claims)
           {:keys [name email picture]} (->>
-                    {:headers {"Authorization" (str "Bearer "
-                                                    (auth0/get-management-token auth0))}}
-                    (http/get (str "https://designvote.eu.auth0.com/api/v2/users/" sub))
-                    (m/decode-response-body))]
+                                         {:headers {"Authorization" (str "Bearer "
+                                                                         (auth0/get-management-token auth0))}}
+                                         (http/get (str "https://designvote.eu.auth0.com/api/v2/users/" sub))
+                                         (m/decode-response-body))]
       (account-db/create-account! db {:uid sub :name (or name email) :picture picture})
       (rr/status 201))))
+
+(defn create-account!
+  [db auth0]
+  (fn [request]
+    (let [body (-> request :parameters :body)]
+      (println body)
+      (rr/created (str responses/base-url "/accounts/test") (or body {:test "passed"})))))
+
 
 
 ;; Make a request to delete account from auth0
