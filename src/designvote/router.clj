@@ -26,13 +26,14 @@
      :handler (swagger/create-swagger-handler)}}])
 
 (def router-config
-  {;:reitit.middleware/transform dev/print-request-diffs ;; This is for debugging purposes
+  {:reitit.middleware/transform dev/print-request-diffs ;; This is for debugging purposes
    :validate  rs/validate
    :exception pretty/exception
    :data      {:coercion   coercion-spec/coercion
                :muuntaja   m/instance
                :middleware [swagger/swagger-feature
                             muuntaja/format-middleware
+                            coercion/coerce-exceptions-middleware
                             coercion/coerce-request-middleware
                             coercion/coerce-response-middleware
                             mw/exception-middleware]}})
@@ -54,5 +55,7 @@
         ]]
       router-config)
     (ring/routes
-      (swagger-ui/create-swagger-ui-handler {:path "/"}))
+      (swagger-ui/create-swagger-ui-handler {:path "/"})
+      ; Finally if nothing matches, return 404
+      (constantly {:status 404, :body ""}))
     {:middleware [cors-middleware]}))

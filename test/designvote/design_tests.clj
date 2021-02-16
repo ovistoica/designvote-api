@@ -8,10 +8,10 @@
   "Fixture to create a new user with auth0, retrieve correct token for tests and delete user at cleanup"
   [f]
   (ts/create-auth0-user {:connection "Username-Password-Authentication"
-                         :email      "account-testing@designvote.io"
+                         :email      "testing@designvote.io"
                          :password   "Sepulcral94"})
-  (reset! ts/token (ts/get-test-token "account-testing@designvote.io"))
-  (ts/test-endpoint :post "/v1/account" {:auth true})
+  (reset! ts/token (ts/get-test-token "testing@designvote.io"))
+  (ts/test-endpoint :post "/v1/account/uid" {:auth true})
   (f)
   (ts/test-endpoint :delete "/v1/account" {:auth true})
   (reset! ts/token nil))
@@ -31,6 +31,13 @@
 (def version {:name        "Design option 1"
               :pictures    ["Picture 1" "Picture 2"]
               :description "Design option description"})
+
+(def multiple-versions [{:name        "Design option 1"
+                         :pictures    ["Picture 1" "Picture 2"]
+                         :description "Design option description"}
+                        {:name        "Design option 2"
+                         :pictures    ["Picture 2.1" "Picture 2.2"]
+                         :description "Design option description"}])
 
 (def new-version (assoc version :name "Updated design version"))
 
@@ -58,27 +65,34 @@
       (is (= status 201))))
 
   (testing "Update design"
-    (let [{:keys [status]} (ts/test-endpoint :put (str "/v1/designs/" @design-id) {:auth true :body update-design})]
-      (is (= status 204))))
+      (let [{:keys [status]} (ts/test-endpoint :put (str "/v1/designs/" @design-id) {:auth true :body update-design})]
+        (is (= status 204))))
 
   (testing "Add version to design"
-    (let [{:keys [status body]} (ts/test-endpoint :post (str "/v1/designs/" @design-id "/versions")
-                                                  {:auth true :body version})]
-      (reset! version-id (:version-id body))
-      (is (= status 201))
-      (is (string? (:version-id body)))))
+      (let [{:keys [status body]} (ts/test-endpoint :post (str "/v1/designs/" @design-id "/versions")
+                                                    {:auth true :body version})]
+        (reset! version-id (:version-id body))
+        (is (= status 201))
+        (is (string? (:version-id body)))))
+
 
 
   (testing "Update design version"
-    (let [{:keys [status]} (ts/test-endpoint :put (str "/v1/designs/" @design-id "/versions")
-                                             {:auth true :body (assoc new-version
-                                                                 :version-id @version-id)})]
-      (is (= status 204))))
+      (let [{:keys [status]} (ts/test-endpoint :put (str "/v1/designs/" @design-id "/versions")
+                                               {:auth true :body (assoc new-version
+                                                                   :version-id @version-id)})]
+        (is (= status 204))))
+
+  (testing "Add multiple  versions to design"
+    (let [{:keys [status body]} (ts/test-endpoint :post (str "/v1/designs/" @design-id "/versions/multiple")
+                                                  {:auth true :body {:versions multiple-versions}})]
+      (is (= status 201))
+      (is (= (:design-id body) @design-id))))
 
   (testing "Vote design version"
     (let [{:keys [status body]} (ts/test-endpoint :post (str "/v1/designs/" @design-id "/votes")
-                                             {:auth true :body {:version-id @version-id
-                                                                :opinion    "It was really good"}})]
+                                                  {:auth true :body {:version-id @version-id
+                                                                     :opinion    "It was really good"}})]
       (is (= status 201))
       (is (string? (:vote-id body)))
       (reset! vote-id (:vote-id body))
@@ -87,8 +101,8 @@
 
   (testing "Unvote design version"
     (let [{:keys [status]} (ts/test-endpoint :delete (str "/v1/designs/" @design-id "/votes")
-                                                  {:auth true :body {:version-id @version-id
-                                                                     :vote-id @vote-id}})]
+                                             {:auth true :body {:version-id @version-id
+                                                                :vote-id    @vote-id}})]
       (is (= status 204))))
 
   (testing "Delete design version"
@@ -98,8 +112,8 @@
 
 
   (testing "Delete design"
-    (let [{:keys [status]} (ts/test-endpoint :delete (str "/v1/designs/" @design-id) {:auth true})]
-      (is (= status 204)))))
+      (let [{:keys [status]} (ts/test-endpoint :delete (str "/v1/designs/" @design-id) {:auth true})]
+        (is (= status 204)))))
 
 
 

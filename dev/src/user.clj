@@ -18,6 +18,7 @@
 
 (def app (-> state/system :designvote/app))
 (def db (-> state/system :db/postgres))
+(println db)
 
 (def design
   {:design-id   "a1995316-80ea-4a98-939d-7c6295e4bb46",
@@ -30,42 +31,78 @@
    })
 
 (def options
-  [{:option-id   "22a82a84-91cc-40e2-8775-d5bee9d188ff",
-    :name        "Feed 1",
+  [{:name        "Feed 1",
     :description "With cool title",
-    :design-id   "a1995316-80ea-4a98-939d-7c6295e4bb46",
-    :votes       2}
-   {:option-id   "64f0aed2-157e-481a-a318-8752709e5a5a",
-    :name        "Feed 2",
+    :pictures    ["picture1" "picture2"]}
+   {:name        "Feed 2",
     :description "Without cool title",
-    :design-id   "a1995316-80ea-4a98-939d-7c6295e4bb46",
-    :votes       2}])
+    :pictures    ["otherpicture", "otherother picture"]
+    }])
 
-(def pictures [{:picture-id "05cbe0ef-fd8a-47a0-8602-2c154a06edba",
-                :uri        "https://res.cloudinary.com/stoica94/image/upload/v1611124826/samples/people/jazz.jpg",
-                :option-id  "64f0aed2-157e-481a-a318-8752709e5a5a"}
-               {:picture-id "aaa7ab14-efd7-45a1-ac86-aa6bfe13a2ab",
-                :uri        "https://res.cloudinary.com/stoica94/image/upload/v1611124829/samples/ecommerce/leather-bag-gray.jpg",
-                :option-id  "22a82a84-91cc-40e2-8775-d5bee9d188ff"}])
+(def option1 (first options))
 
-(def option-id (str (UUID/randomUUID)))
+(def pics (:pictures option1))
 
-(def u-option {:name        "Design option 2"
-             :description "Design option description"
-             :version-id   "f012da67-4172-4205-8011-31a69527107a"
-             :design-id   "6049ca50-ec0f-4bf3-8950-1a3ce1194bec"
-             :pictures    ["Picture 1" "Picture 2"]})
+(defn construct-pictures [option]
+  (let [pictures (:pictures option)]
+    (map #(assoc {:uri %}
+            :option-id (:option-id option)
+            :picture-id (str (UUID/randomUUID))) pictures)))
 
+(def design-id "a1995316-80ea-4a98-939d-7c6295e4bb46")
+(def db-opts (map #(dissoc % :pictures) options))
+
+
+
+(def finalPicts (map (fn [elem] (assoc {:uri elem}
+                                  :option-id (:option-id option1)
+                                  :picture-id (str (UUID/randomUUID)))) pics))
+
+
+
+;(def u-option {:name        "Design option 2"
+;               :description "Design option description"
+;               :version-id  "f012da67-4172-4205-8011-31a69527107a"
+;               :design-id   "6049ca50-ec0f-4bf3-8950-1a3ce1194bec"
+;               :pictures    ["Picture 1" "Picture 2"]})
+;
 ;(def db-pictures (into [] (map
 ;                            (fn [pic] [pic "0d33b525-cf91-4682-aa2c-03944385b922" (str (UUID/randomUUID))])
 ;                            ["Picture 1" "Picture 2"])))
 
 
+(def db-versions
+  [{:description "Design option description"
+    :name        "Design option 1"
+    :design-id   "9cd035eb-a4d0-4ce2-ae75-b3b3cdcb76ed"
+    :version-id  "82b6640d-5c4b-4ddd-aae6-4345ead643e4"}
+   {:description "Design option description"
+    :name        "Design option 2"
+    :design-id   "9cd035eb-a4d0-4ce2-ae75-b3b3cdcb76ed"
+    :version-id  "4e901694-4279-4722-bfea-8fd841f772aa"}])
+
+(defn parse-pics
+  []
+  (let [pics (map :pictures options)] pics))
+
+(defn orderd
+  [version]
+  (let [{:keys [design-id version-id name description]} version]
+    [design-id version-id name description]))
+
 
 
 (comment
+  (into [] (flatten (map construct-db-pictures options)))
   (let [result])
   (println db)
+  (orderd (first db-versions))
+  (map #(let [{:keys [design-id version-id name description]} %]
+          [design-id version-id name description] ) db-versions)
+
+
+  (sql/insert-multi! db :design-version [:description :name :design-id :version-id]
+                     db-versions)
   (jdbc/with-transaction
     [tx db]
     (sql/insert-multi! tx :picture [:uri :option_id :picture_id] db-pictures))
@@ -73,11 +110,12 @@
   (go)
   (halt)
   (reset)
+  (parse-pics)
 
   (design-db/insert-design-version! db u-option)
-  (design-db/vote-design-version! db {:design-id "710d10e9-6585-43a4-871b-c4bf532f2313"
+  (design-db/vote-design-version! db {:design-id  "710d10e9-6585-43a4-871b-c4bf532f2313"
                                       :version-id "aa0300a3-2de3-450d-bf08-bccc7dbede84"
-                                      :opinion "It is good"})
+                                      :opinion    "It is good"})
 
 
   (design-db/find-design-by-id! db "710d10e9-6585-43a4-871b-c4bf532f2313")

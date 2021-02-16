@@ -1,7 +1,8 @@
 (ns designvote.design.routes
   (:require [designvote.middleware :as mw]
             [designvote.design.handlers :as design]
-            [designvote.responses :as responses]))
+            [designvote.responses :as responses]
+            [clojure.spec.alpha :as s]))
 
 (defn routes
   [env]
@@ -15,8 +16,8 @@
        :post {:handler    (design/create-design! db)
               :responses  {201 {:body {:design-id string?}}}
               :parameters {:body {:name        string?
-                                  :description string?
-                                  :img         string?}}
+                                  :description (s/nilable string?)
+                                  :img         (s/nilable string?)}}
               :summary    "Create a design"}
        }]
      ["/:design-id"
@@ -46,7 +47,7 @@
                   :parameters {:path {:design-id string?}
                                :body {:name        string?
                                       :pictures    vector?
-                                      :description string?}}
+                                      :description (s/nilable string?)}}
                   :summary    "Create a design version"}
          :put    {:handler    (design/update-design-version! db)
                   :responses  {204 {:body nil?}}
@@ -59,12 +60,21 @@
                   :responses  {204 {:body nil?}}
                   :parameters {:path {:design-id string?}
                                :body {:version-id string?}}
-                  :summary    "Delete a design version"}}]]
+                  :summary    "Delete a design version"}}]
+       ["/multiple"
+        {:post {:handler    (design/add-multiple-design-versions db)
+                :response   {201 {:body {:design-id string?}}}
+                :parameters {:path {:design-id string?}
+                             :body {:versions [{:name        string?
+                                                :pictures    vector?
+                                                :description (s/nilable string?)}]}}
+                :summary    "Upload multiple design versions"}}
+        ]]
       ["/votes"
        {:post   {:handler    (design/vote-design! db)
                  :parameters {:path {:design-id string?}
                               :body {:version-id string?
-                                     :opinion string?}}
+                                     :opinion    string?}}
                  :responses  {204 {:body nil?}}
                  :summary    "Vote design version"}
         :delete {:handler    (design/unvote-design! db)

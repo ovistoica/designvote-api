@@ -63,6 +63,20 @@
       )))
 
 
+(defn add-multiple-design-versions
+  [db]
+  (fn [request]
+    (let [design-id (-> request :parameters :path :design-id)
+          req-versions (-> request :parameters :body :versions)
+          versions (into [] (map #(assoc % :design-id design-id
+                                           :version-id (str (UUID/randomUUID))) req-versions))
+          created? (designs-db/insert-multiple-design-versions! db versions)]
+      (if created? (rr/created (str responses/base-url "/designs/" design-id)
+                               {:design-id design-id})
+                   {:status  500
+                    :headers {}
+                    :body    {:message "Something went wrong. Please try again"}}))))
+
 (defn add-design-version!
   [db]
   (fn [request]

@@ -7,8 +7,8 @@
             [designvote.responses :as responses]))
 
 ;; After an account has been created in auth0, store it
-;; in the local DB
-(defn create-account2!
+;; in the local DB. Also used in local tests
+(defn create-account-from-uid!
   [db auth0]
   (fn [request]
     (let [{:keys [sub]} (-> request :claims)
@@ -17,9 +17,11 @@
                                                                          (auth0/get-management-token auth0))}}
                                          (http/get (str "https://designvote.eu.auth0.com/api/v2/users/" sub))
                                          (m/decode-response-body))]
-      (account-db/create-account! db {:uid sub :name (or name email) :picture picture})
+      (account-db/create-account! db {:uid sub :name name :email email :picture picture})
       (rr/status 201))))
 
+;; Webhook endpoint. After auth0 created a new account
+;; it send the user info at this endpoint to be stored in the DB
 (defn create-account!
   [db]
   (fn [request]

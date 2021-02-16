@@ -1,6 +1,7 @@
 (ns designvote.design.db
   (:require [next.jdbc.sql :as sql]
-            [next.jdbc :as jdbc])
+            [next.jdbc :as jdbc]
+            [next.jdbc.prepare :as p])
   (:import java.util.UUID))
 
 
@@ -52,16 +53,50 @@
       :next.jdbc/update-count
       (pos?)))
 
+(defn construct-db-pictures
+  "Extracts pictures uri from the design-version object
+  and returns an insertable array of pictures format
+  {:picture-id :uri :version-id}"
+  [design-version]
+  (let [pictures (:pictures design-version)]
+    (map #(assoc {:uri %}
+            :version-id (:version-id design-version)
+            :picture-id (str (UUID/randomUUID))) pictures)))
+
+
+(defn insert-multiple-design-versions!
+  "Given an array of versions containing the
+  :picture key as an array of uri's, extracts the
+  pictures from every design-version constructs the
+  insertable objects for versions and pictures and inserts them in the correct tables"
+  [db versions]
+  (let [version-cols [:version-id :design-id :name :description]
+        pic-cols [:uri :version-id :picture-id]
+        db-pictures (into [] (flatten (map construct-db-pictures versions)))]
+    (jdbc/with-transaction
+      [tx db]
+      (let [inserted-versions (sql/insert-multi! tx :design-version version-cols
+                                                 (map (apply juxt version-cols) versions)
+                                                 (:options db))
+            inserted-pics (sql/insert-multi! tx :picture pic-cols
+                                             (map (apply juxt pic-cols) db-pictures)
+                                             (:options db))]
+        (and (pos? (count inserted-versions))
+             (pos? (count inserted-pics)))))))
+
 (defn insert-design-version!
   [db version]
   (let [{:keys [pictures]} version
         design-version (dissoc version :pictures)
-        db-pictures (into [] (map (fn [pic] [pic (:version-id version) (str (UUID/randomUUID))])
-                                  pictures))]
+        db-pictures (into [] (map (fn [pic] [pic (:version-id version)
+                                             (str (UUID/randomUUID))]) pictures))]
     (jdbc/with-transaction
       [tx db]
-      (sql/insert! tx :design-version design-version (:options db))
-      (sql/insert-multi! tx :picture [:uri :version-id :picture-id] db-pictures (:options db)))))
+      (let [design-res (sql/insert! tx :design-version design-version (:options db))
+            pictures-res (sql/insert-multi! tx :picture
+                                            [:uri :version-id :picture-id]
+                                            db-pictures (:options db))]
+        true))))
 
 (defn update-design-version!
   [db version]

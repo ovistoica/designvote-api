@@ -26,7 +26,4 @@
 (comment
   (get-management-token)
   (get-manage-recipe-role)
-  (get-test-token)
-  (create-auth0-user {:connection "Username-Password-Authentication"
-                      :email      "account-testing@cheffy.app"
-                      :password   "Sepulcral94"}))
+  (get-test-token) )

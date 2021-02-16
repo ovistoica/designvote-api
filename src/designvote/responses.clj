@@ -12,7 +12,7 @@
 
 (def version {:design-id         string?
              :name              string?
-             :description       string?
+             :description       (s/nilable string?)
              (ds/opt :pictures) [picture]
              (ds/opt :votes)    [vote]
              })

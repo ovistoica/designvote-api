@@ -6,7 +6,7 @@
   [env]
   (let [db (:jdbc-url env)
         auth0 (:auth0 env)]
-    ["/account" {:swagger {:tags ["account"]}}
+    ["/account" {:swagger {:tags ["account"]} }
      [""
       {:post   {:handler    (account/create-account! db)
                 :responses  {201 {:body any?}}
@@ -21,5 +21,11 @@
                 :summary    "Create an account"}
        :delete {:handler   (account/delete-account! db auth0)
                 :responses {204 {:body nil?}}
-                :summary   "Delete an account"}}]]))
+                :middleware [[mw/wrap-auth0]]
+                :summary   "Delete an account"}}]
+     ["/uid"
+      {:post {:handler   (account/create-account-from-uid! db auth0)
+              :responses {201 {:body nil}}
+              :middleware [[mw/wrap-auth0]]
+              :summary   "Create an account based on user token and id"}}]]))
 
