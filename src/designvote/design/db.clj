@@ -84,6 +84,7 @@
         (and (pos? (count inserted-versions))
              (pos? (count inserted-pics)))))))
 
+;TODO ensure correct verification of insertion
 (defn insert-design-version!
   [db version]
   (let [{:keys [pictures]} version
