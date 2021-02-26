@@ -115,9 +115,11 @@
     (let [uid (-> request :claims :sub)
           design-id (-> request :parameters :path :design-id)
           version-id (-> request :parameters :body :version-id)
+          opinion (-> request :parameters :body :opinion)
           vote-id (str (UUID/randomUUID))]
       (designs-db/vote-design-version! db {:vote-id    vote-id
                                            :uid        (or uid nil)
+                                           :opinion    opinion
                                            :version-id version-id
                                            :design-id  design-id})
       (rr/created (str responses/base-url "/designs/" design-id) {:design-id  design-id

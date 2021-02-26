@@ -74,7 +74,7 @@
        {:post   {:handler    (design/vote-design! db)
                  :parameters {:path {:design-id string?}
                               :body {:version-id string?
-                                     :opinion    string?}}
+                                     :opinion    (s/nilable string?)}}
                  :responses  {204 {:body nil?}}
                  :summary    "Vote design version"}
         :delete {:handler    (design/unvote-design! db)

@@ -15,7 +15,7 @@ values ('a3dde84c-4a33-45aa-b0f3-4bf9ac997680', false,  'New sign up', 'https://
 
 
 
--- design_option
+-- design_version
 truncate table design_version cascade;
 insert into design_version (version_id, design_id, name, description, votes )
 values ('867ed4bf-4628-48f4-944d-e6b7786bfa92', 'a3dde84c-4a33-45aa-b0f3-4bf9ac997680', 'Sign up 1', 'With facebook button', 2  ),
@@ -34,13 +34,26 @@ values ('27b1f44c-2852-416d-960e-3ee7d23ee713', '867ed4bf-4628-48f4-944d-e6b7786
 
 -- vote
 truncate table vote cascade;
-insert into vote (version_id, vote_id, opinion)
-values ('867ed4bf-4628-48f4-944d-e6b7786bfa92', '867ed4bf-4628-48f4-944d-e6b7786bfa93','I like this one better'),
-       ('867ed4bf-4628-48f4-944d-e6b7786bfa92', '867ed4bf-4628-48f4-944d-e6b7786bfa94','I like this one'),
-       ('803307da-8dec-4c1b-a0f2-36742ac0e7f2', '867ed4bf-4628-48f4-944d-e6b7786bfa95','The other one is ugly'),
-       ('803307da-8dec-4c1b-a0f2-36742ac0e7f2', '867ed4bf-4628-48f4-944d-e6b7786bfa97','Meh, good enough'),
-       ('803307da-8dec-4c1b-a0f2-36742ac0e7f2', '867ed4bf-4628-48f4-944d-e6b7786bfa23','Ok'),
-       ('22a82a84-91cc-40e2-8775-d5bee9d188ff', '867ed4bf-4628-48f4-944d-e6b7786bfa63','I like it'),
-       ('22a82a84-91cc-40e2-8775-d5bee9d188ff', '867ed4bf-4628-48f4-944d-e6b7786bfa21','Great work on this one'),
-       ('64f0aed2-157e-481a-a318-8752709e5a5a', '867ed4bf-4628-48f4-944d-e6b7786bfa19','This is perfect'),
-       ('64f0aed2-157e-481a-a318-8752709e5a5a', '867ed4bf-4628-48f4-944d-e6b7786bfa70','Good for you');
+insert into vote (version_id, vote_id)
+values ('867ed4bf-4628-48f4-944d-e6b7786bfa92', '867ed4bf-4628-48f4-944d-e6b7786bfa93'),
+       ('867ed4bf-4628-48f4-944d-e6b7786bfa92', '867ed4bf-4628-48f4-944d-e6b7786bfa94'),
+       ('803307da-8dec-4c1b-a0f2-36742ac0e7f2', '867ed4bf-4628-48f4-944d-e6b7786bfa95'),
+       ('803307da-8dec-4c1b-a0f2-36742ac0e7f2', '867ed4bf-4628-48f4-944d-e6b7786bfa97'),
+       ('803307da-8dec-4c1b-a0f2-36742ac0e7f2', '867ed4bf-4628-48f4-944d-e6b7786bfa23'),
+       ('22a82a84-91cc-40e2-8775-d5bee9d188ff', '867ed4bf-4628-48f4-944d-e6b7786bfa63'),
+       ('22a82a84-91cc-40e2-8775-d5bee9d188ff', '867ed4bf-4628-48f4-944d-e6b7786bfa21'),
+       ('64f0aed2-157e-481a-a318-8752709e5a5a', '867ed4bf-4628-48f4-944d-e6b7786bfa19'),
+       ('64f0aed2-157e-481a-a318-8752709e5a5a', '867ed4bf-4628-48f4-944d-e6b7786bfa70');
+
+-- opinion
+truncate table opinion  cascade;
+insert into opinion (design_id, version_id, opinion)
+values ('a3dde84c-4a33-45aa-b0f3-4bf9ac997680','867ed4bf-4628-48f4-944d-e6b7786bfa92','I like this one better'),
+       ('a3dde84c-4a33-45aa-b0f3-4bf9ac997680','867ed4bf-4628-48f4-944d-e6b7786bfa92','I like this one'),
+       ('a3dde84c-4a33-45aa-b0f3-4bf9ac997680','803307da-8dec-4c1b-a0f2-36742ac0e7f2','The other one is ugly'),
+       ('a3dde84c-4a33-45aa-b0f3-4bf9ac997680','803307da-8dec-4c1b-a0f2-36742ac0e7f2','Meh, good enough'),
+       ('a3dde84c-4a33-45aa-b0f3-4bf9ac997680','803307da-8dec-4c1b-a0f2-36742ac0e7f2','Ok'),
+       ('a1995316-80ea-4a98-939d-7c6295e4bb46','22a82a84-91cc-40e2-8775-d5bee9d188ff','I like it'),
+       ('a1995316-80ea-4a98-939d-7c6295e4bb46','22a82a84-91cc-40e2-8775-d5bee9d188ff','Great work on this one'),
+       ('a1995316-80ea-4a98-939d-7c6295e4bb46','64f0aed2-157e-481a-a318-8752709e5a5a','This is perfect'),
+       ('a1995316-80ea-4a98-939d-7c6295e4bb46','64f0aed2-157e-481a-a318-8752709e5a5a','Good for you');

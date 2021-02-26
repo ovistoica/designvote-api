@@ -28,8 +28,10 @@
           [design] (sql/find-by-keys conn-opts :design
                                      {:design-id design-id})
           versions (sql/find-by-keys conn-opts :design-version
-                                     {:design-id design-id})]
-      (if versions (assoc design :versions
+                                     {:design-id design-id})
+          opinions (sql/find-by-keys conn-opts :opinion {:design-id design-id})]
+      (if versions (assoc design :opinions opinions
+                                 :versions
                                  (into []
                                        (doall (for [{:keys [version-id] :as version} versions
                                                     :let [pictures
@@ -111,10 +113,16 @@
       :next.jdbc/update-count
       (pos?)))
 
+(def not-nil? (complement nil?))
+
 (defn vote-design-version!
-  [db {:keys [version-id design-id] :as data}]
+  [db {:keys [version-id design-id opinion] :as data}]
   (jdbc/with-transaction [tx db]
-                         (sql/insert! tx :vote (select-keys data [:version-id :opinion :vote-id]) (:options db))
+                         (sql/insert! tx :vote (select-keys data [:version-id :vote-id :uid]) (:options db))
+                         (when (not-nil? opinion)
+                           (sql/insert! tx :opinion
+                                        (select-keys data [:design-id :version-id :opinion :uid])
+                                        (:options db)))
                          (jdbc/execute-one! tx ["UPDATE design
                             SET total_votes = total_votes + 1
                             WHERE design_id = ?" design-id])

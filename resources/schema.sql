@@ -53,7 +53,16 @@ CREATE TABLE picture
 CREATE TABLE vote
 (
  vote_id   text NOT NULL PRIMARY KEY,
- opinion   text,
  version_id text NOT NULL REFERENCES design_version (version_id) ON DELETE CASCADE,
  uid        text REFERENCES account (uid) ON DELETE SET NULL
+);
+
+CREATE TABLE opinion
+(
+ opinion_id  serial NOT NULL PRIMARY KEY,
+ opinion   text,
+ version_id text NOT NULL REFERENCES design_version (version_id) ON DELETE CASCADE,
+ design_id  text NOT NULL REFERENCES design (design_id) ON DELETE CASCADE,
+ uid        text REFERENCES account (uid) ON DELETE SET NULL,
+ thumbs_up  int CHECK (thumbs_up >= 0) DEFAULT 0
 );
