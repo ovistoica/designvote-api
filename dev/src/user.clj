@@ -5,7 +5,10 @@
             [designvote.server]
             [next.jdbc :as jdbc]
             [next.jdbc.sql :as sql]
-            [designvote.design.db :as design-db])
+            [designvote.design.db :as design-db]
+            [buddy.core.hash :as h]
+            [buddy.core.codecs :as c])
+
   (:import java.util.UUID))
 
 (ig-repl/set-prep!
@@ -98,7 +101,7 @@
   (println db)
   (orderd (first db-versions))
   (map #(let [{:keys [design-id version-id name description]} %]
-          [design-id version-id name description] ) db-versions)
+          [design-id version-id name description]) db-versions)
 
 
   (sql/insert-multi! db :design-version [:description :name :design-id :version-id]
@@ -111,6 +114,7 @@
   (halt)
   (reset)
   (parse-pics)
+  (->"710d10e9-6585-43a4-871b-c4bf532f2311" (h/blake2b  3) (c/bytes->hex))
 
   (design-db/insert-design-version! db u-option)
   (design-db/vote-design-version! db {:design-id  "710d10e9-6585-43a4-871b-c4bf532f2313"

@@ -13,7 +13,10 @@
             [designvote.middleware :as mw]
             [designvote.account.routes :as account]
             [designvote.design.routes :as design]
-            [ring.middleware.cors :as cors]))
+            [ring.middleware.cors :as cors]
+            [reitit.exception :as r-exception]
+            ))
+
 
 (def swagger-docs
   ["/swagger.json"
@@ -29,6 +32,8 @@
   {;:reitit.middleware/transform dev/print-request-diffs ;; This is for debugging purposes
    :validate  rs/validate
    :exception pretty/exception
+   :conflicts (fn [conflicts]
+                (println (r-exception/format-exception :path-conflicts nil conflicts)))
    :data      {:coercion   coercion-spec/coercion
                :muuntaja   m/instance
                :middleware [swagger/swagger-feature

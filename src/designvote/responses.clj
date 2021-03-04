@@ -30,7 +30,4 @@
    (ds/opt :versions) [version]
    (ds/opt :opinions) [opinion]})
 
-(def designs
-  {:public          [design]
-   (ds/opt :drafts) [design]
-   })
+(def designs [design])

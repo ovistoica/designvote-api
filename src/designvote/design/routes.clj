@@ -7,40 +7,56 @@
 (defn routes
   [env]
   (let [db (:jdbc-url env)]
-    ["/designs" {:swagger    {:tags ["designs"]}
-                 :middleware [[mw/wrap-auth0]]}
+    ["/designs" {:swagger {:tags ["designs"]}}
      [""
-      {:get  {:handler   (design/list-all-designs! db)
-              :responses {200 {:body responses/designs}}
-              :summary   "Get all designs"}
-       :post {:handler    (design/create-design! db)
-              :responses  {201 {:body {:design-id string?}}}
-              :parameters {:body {:name        string?
-                                  :description (s/nilable string?)
-                                  :img         (s/nilable string?)}}
-              :summary    "Create a design"}
+      {:middleware [[mw/wrap-auth0]]
+       :get        {:handler   (design/list-all-designs! db)
+                    :responses {200 {:body responses/designs}}
+                    :summary   "Get all designs"}
+       :post       {:handler    (design/create-design! db)
+                    :responses  {201 {:body {:design-id string?}}}
+                    :parameters {:body {:name        string?
+                                        :description (s/nilable string?)
+                                        :img         (s/nilable string?)}}
+                    :summary    "Create a design"}
        }]
+     ["/short"
+      ["/:short-url"
+       {:get {:handler    (design/find-design-by-url! db)
+              :responses  {200 {:body responses/design}}
+              :parameters {:path {:short-url string?}}
+              :summary    "Retrieve design by short url"}}
+       ]]
      ["/:design-id"
       [""
-       {:get    {:handler    (design/retrieve-design! db)
-                 :responses  {200 {:body responses/design}}
-                 :parameters {:path {:design-id string?}}
-                 :summary    "Retrieve design"}
-        :put    {:handler    (design/update-design! db)
-                 :middleware [[mw/wrap-design-owner db]]
-                 :responses  {204 {:body nil?}}
-                 :parameters {:path {:design-id string?}
-                              :body {:name        string?
-                                     :description string?
-                                     :img         string?
-                                     :public      boolean?}}
-                 :summary    "Update design"}
-        :delete {:handler    (design/delete-design! db)
-                 :middleware [[mw/wrap-design-owner db]]
-                 :responses  {204 {:body nil?}}
-                 :parameters {:path {:design-id string?}}
-                 :summary    "Delete design"}}]
-      ["/versions" {:middleware [[mw/wrap-design-owner db]]}
+       {:middleware [[mw/wrap-auth0]]
+        :get        {:handler    (design/retrieve-design! db)
+                     :responses  {200 {:body responses/design}}
+                     :parameters {:path {:design-id string?}}
+                     :summary    "Retrieve design"}
+        :put        {:handler    (design/update-design! db)
+                     :middleware [[mw/wrap-design-owner db]]
+                     :responses  {204 {:body nil?}}
+                     :parameters {:path {:design-id string?}
+                                  :body {:name        string?
+                                         :description string?
+                                         :img         string?
+                                         :public      boolean?}}
+                     :summary    "Update design"}
+        :delete     {:handler    (design/delete-design! db)
+                     :middleware [[mw/wrap-design-owner db]]
+                     :responses  {204 {:body nil?}}
+                     :parameters {:path {:design-id string?}}
+                     :summary    "Delete design"}}]
+      ["/publish"
+       {:middleware [[mw/wrap-auth0]]
+        :post       {:handler    (design/publish-design! db)
+                     :response   {201 {:body {:design-id string?}}}
+                     :parameters {:path {:design-id string?}}
+                     :summary    "Publish a design to be ready for voting"}}
+
+       ]
+      ["/versions" {:middleware [[mw/wrap-auth0] [mw/wrap-design-owner db]]}
        [""
         {:post   {:handler    (design/add-design-version! db)
                   :responses  {201 {:body {:version-id string?}}}
@@ -69,7 +85,8 @@
                                                 :pictures    vector?
                                                 :description (s/nilable string?)}]}}
                 :summary    "Upload multiple design versions"}}
-        ]]
+        ]
+       ]
       ["/votes"
        {:post   {:handler    (design/vote-design! db)
                  :parameters {:path {:design-id string?}
@@ -81,5 +98,7 @@
                  :parameters {:path {:design-id string?}
                               :body {:version-id string?}}
                  :responses  {204 {:body nil?}}
-                 :summary    "Unvote design version"}}]]]))
+                 :summary    "Unvote design version"}}]]
+
+     ]))
 

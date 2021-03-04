@@ -1,7 +1,10 @@
 (ns designvote.design.handlers
   (:require [ring.util.response :as rr]
             [designvote.responses :as responses]
-            [designvote.design.db :as designs-db])
+            [designvote.design.db :as designs-db]
+            [buddy.core.hash :as hash]
+            [buddy.core.codecs :as decode]
+            [buddy.core.codecs :as c])
   (:import java.util.UUID))
 
 ;Get all designs from database
@@ -9,7 +12,7 @@
   [db]
   (fn [request]
     (let [uid (-> request :claims :sub)
-          designs (designs-db/find-all-designs! db uid)]
+          designs (designs-db/find-all-user-designs! db uid)]
       (rr/response designs))))
 
 ;Create a design using randomUUID as design-id
@@ -135,3 +138,30 @@
       (if deleted?
         (rr/status 204)
         (rr/bad-request {:vote-id (:vote-id vote)})))))
+
+
+;TODO Retrieve the whole design or at least the short URL
+(defn publish-design!
+  "Generate public-url for a design and make public true.
+  This happens when a user is ready to share his design to voters"
+  [db]
+  (fn [request]
+    (let [design-id (-> request :parameters :path :design-id)
+          short-url (-> design-id (hash/blake2b 3) (c/bytes->hex))
+          published? (designs-db/update-design! db {:design-id design-id
+                                                    :short-url short-url
+                                                    :public    true})]
+      (if published? (rr/status 204)
+                     (rr/bad-request {:design-id design-id})))))
+
+(defn find-design-by-url!
+  [db]
+  (fn [request]
+    (let [short-url (-> request :parameters :path :short-url)
+          design (designs-db/find-design-by-url! db short-url)]
+      (if design
+        (rr/response design)
+        (rr/not-found {:type    "design-not-found"
+                       :message "Design not found"
+                       :data    (str "short-url" short-url)}))
+      )))

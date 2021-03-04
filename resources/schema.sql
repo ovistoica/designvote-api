@@ -1,8 +1,8 @@
 -- Drop tables
 drop table if exists vote;
 drop table if exists picture;
+drop table if exists opinion;
 
-drop table if exists design_option;
 drop table if exists design_version;
 drop table if exists design;
 
@@ -28,6 +28,7 @@ CREATE TABLE design
  "public" boolean NOT NULL,
  img         text,
  description text,
+ short_url   text,
  total_votes int CHECK (total_votes >= 0) DEFAULT 0,
  uid text NOT NULL REFERENCES account(uid) ON DELETE CASCADE
 );
