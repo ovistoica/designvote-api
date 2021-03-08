@@ -1,8 +1,7 @@
 (ns designvote.design-tests
   (:require [clojure.test :refer :all]
             [designvote.server :refer :all]
-            [designvote.test-system :as ts]
-            [clojure.spec.alpha :as s]))
+            [designvote.test-system :as ts]))
 
 (defn token-fixture
   "Fixture to create a new user with auth0, retrieve correct token for tests and delete user at cleanup"
@@ -65,23 +64,23 @@
       (is (= status 201))))
 
   (testing "Update design"
-      (let [{:keys [status]} (ts/test-endpoint :put (str "/v1/designs/" @design-id) {:auth true :body update-design})]
-        (is (= status 204))))
+    (let [{:keys [status]} (ts/test-endpoint :put (str "/v1/designs/" @design-id) {:auth true :body update-design})]
+      (is (= status 204))))
 
   (testing "Add version to design"
-      (let [{:keys [status body]} (ts/test-endpoint :post (str "/v1/designs/" @design-id "/versions")
-                                                    {:auth true :body version})]
-        (reset! version-id (:version-id body))
-        (is (= status 201))
-        (is (string? (:version-id body)))))
+    (let [{:keys [status body]} (ts/test-endpoint :post (str "/v1/designs/" @design-id "/versions")
+                                                  {:auth true :body version})]
+      (reset! version-id (:version-id body))
+      (is (= status 201))
+      (is (string? (:version-id body)))))
 
 
 
   (testing "Update design version"
-      (let [{:keys [status]} (ts/test-endpoint :put (str "/v1/designs/" @design-id "/versions")
-                                               {:auth true :body (assoc new-version
-                                                                   :version-id @version-id)})]
-        (is (= status 204))))
+    (let [{:keys [status]} (ts/test-endpoint :put (str "/v1/designs/" @design-id "/versions")
+                                             {:auth true :body (assoc new-version
+                                                                 :version-id @version-id)})]
+      (is (= status 204))))
 
   (testing "Add multiple  versions to design"
     (let [{:keys [status body]} (ts/test-endpoint :post (str "/v1/designs/" @design-id "/versions/multiple")
@@ -112,8 +111,8 @@
 
 
   (testing "Delete design"
-      (let [{:keys [status]} (ts/test-endpoint :delete (str "/v1/designs/" @design-id) {:auth true})]
-        (is (= status 204)))))
+    (let [{:keys [status]} (ts/test-endpoint :delete (str "/v1/designs/" @design-id) {:auth true})]
+      (is (= status 204)))))
 
 
 

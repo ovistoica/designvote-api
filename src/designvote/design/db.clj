@@ -147,24 +147,28 @@
                             WHERE version_id = ?" version-id])))
 (defn find-design-by-url!
   [db short-url]
+  (println short-url)
   (with-open [conn (jdbc/get-connection db)]
+
     (let [conn-opts (jdbc/with-options conn (:options db))
           [design] (sql/find-by-keys conn-opts :design
-                                     {:short-url short-url})
-          query (select-keys design [:design-id])
-          versions (sql/find-by-keys conn-opts :design-version query)
-          opinions (sql/find-by-keys conn-opts :opinion query)]
-      (if versions (assoc design :opinions opinions
-                                 :versions
-                                 (into []
-                                       (doall (for [{:keys [version-id] :as version} versions
-                                                    :let [pictures
-                                                          (sql/find-by-keys conn-opts :picture
-                                                                            {:version-id version-id})
-                                                          votes (sql/find-by-keys conn-opts :vote
-                                                                                  {:version-id version-id})]]
-                                                (assoc version :pictures pictures :votes votes)))))
-                   design))))
+                                     {:short-url short-url})]
+      (if design
+        (let [query (select-keys design [:design-id])
+              versions (sql/find-by-keys conn-opts :design-version query)
+              opinions (sql/find-by-keys conn-opts :opinion query)]
+          (if versions (assoc design :opinions opinions
+                                     :versions
+                                     (into []
+                                           (doall (for [{:keys [version-id] :as version} versions
+                                                        :let [pictures
+                                                              (sql/find-by-keys conn-opts :picture
+                                                                                {:version-id version-id})
+                                                              votes (sql/find-by-keys conn-opts :vote
+                                                                                      {:version-id version-id})]]
+                                                    (assoc version :pictures pictures :votes votes)))))
+                       design)))
+      nil)))
 
 
 (comment
