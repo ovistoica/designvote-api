@@ -26,26 +26,35 @@
   [db design]
   (sql/insert! db :design design))
 
+(defn build-versions
+  "Given a db-connection and an array of design versions,
+  this function will populate the versions with their respective
+  pictures and votes"
+  [conn versions]
+  (into []
+        (doall
+          (for [{:keys [version-id] :as version} versions
+                :let [pictures
+                      (sql/find-by-keys conn :picture
+                                        {:version-id version-id})
+                      votes (sql/find-by-keys conn :vote
+                                              {:version-id version-id})]]
+            (assoc version :pictures pictures :votes votes)))))
+
 (defn find-design-by-id!
   [db design-id]
   (with-open [conn (jdbc/get-connection db)]
     (let [conn-opts (jdbc/with-options conn (:options db))
           [design] (sql/find-by-keys conn-opts :design
-                                     {:design-id design-id})
-          versions (sql/find-by-keys conn-opts :design-version
-                                     {:design-id design-id})
-          opinions (sql/find-by-keys conn-opts :opinion {:design-id design-id})]
-      (if versions (assoc design :opinions opinions
-                                 :versions
-                                 (into []
-                                       (doall (for [{:keys [version-id] :as version} versions
-                                                    :let [pictures
-                                                          (sql/find-by-keys conn-opts :picture
-                                                                            {:version-id version-id})
-                                                          votes (sql/find-by-keys conn-opts :vote
-                                                                                  {:version-id version-id})]]
-                                                (assoc version :pictures pictures :votes votes)))))
-                   design))))
+                                     {:design-id design-id})]
+      (if design (let [query (select-keys design [:design-id])
+                       versions (sql/find-by-keys conn-opts :design-version query)
+                       opinions (sql/find-by-keys conn-opts :opinion query)]
+                   (if (not (empty? versions))
+                     (assoc design :opinions opinions
+                                   :versions (build-versions conn-opts versions))
+                     design))
+                 nil))))
 
 
 (defn update-design!
@@ -145,9 +154,10 @@
                          (jdbc/execute-one! tx ["UPDATE design_version
                             SET votes = votes - 1
                             WHERE version_id = ?" version-id])))
+
+
 (defn find-design-by-url!
   [db short-url]
-  (println short-url)
   (with-open [conn (jdbc/get-connection db)]
 
     (let [conn-opts (jdbc/with-options conn (:options db))
@@ -157,18 +167,11 @@
         (let [query (select-keys design [:design-id])
               versions (sql/find-by-keys conn-opts :design-version query)
               opinions (sql/find-by-keys conn-opts :opinion query)]
-          (if versions (assoc design :opinions opinions
-                                     :versions
-                                     (into []
-                                           (doall (for [{:keys [version-id] :as version} versions
-                                                        :let [pictures
-                                                              (sql/find-by-keys conn-opts :picture
-                                                                                {:version-id version-id})
-                                                              votes (sql/find-by-keys conn-opts :vote
-                                                                                      {:version-id version-id})]]
-                                                    (assoc version :pictures pictures :votes votes)))))
-                       design)))
-      nil)))
+          (if (not (empty? versions))
+            (assoc design :opinions opinions
+                          :versions (build-versions conn-opts versions))
+            design))
+        nil))))
 
 
 (comment

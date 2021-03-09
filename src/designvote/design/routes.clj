@@ -17,6 +17,7 @@
                     :responses  {201 {:body {:design-id string?}}}
                     :parameters {:body {:name        string?
                                         :description (s/nilable string?)
+                                        :question    (s/nilable string?)
                                         :img         (s/nilable string?)}}
                     :summary    "Create a design"}
        }]
