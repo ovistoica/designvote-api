@@ -14,7 +14,8 @@
                  [camel-snake-kebab "0.4.2"]
                  [com.zaxxer/HikariCP "3.4.5"]
                  [ring-cors "0.1.13"]
-                 [buddy/buddy-core "1.9.0"] ]
+                 [buddy/buddy-core "1.9.0"]
+                 [ragtime "0.8.1"]]
   :profiles {:uberjar {:aot      :all
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
              :dev     {

@@ -104,6 +104,7 @@
     <orderEntry type="library" name="Leiningen: org.clojure/core.specs.alpha:0.2.44" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/java.classpath:1.0.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/java.data:1.0.78" level="project" />
+    <orderEntry type="library" name="Leiningen: org.clojure/java.jdbc:0.5.8" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/spec.alpha:0.2.176" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/test.check:0.10.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/tools.logging:1.1.0" level="project" />
@@ -121,6 +122,10 @@
     <orderEntry type="library" name="Leiningen: ovotech/ring-jwt:1.2.5" level="project" />
     <orderEntry type="library" name="Leiningen: potemkin:0.4.5" level="project" />
     <orderEntry type="library" name="Leiningen: prismatic/schema:1.1.12" level="project" />
+    <orderEntry type="library" name="Leiningen: ragtime/core:0.8.1" level="project" />
+    <orderEntry type="library" name="Leiningen: ragtime/jdbc:0.8.1" level="project" />
+    <orderEntry type="library" name="Leiningen: ragtime:0.8.1" level="project" />
+    <orderEntry type="library" name="Leiningen: resauce:0.1.0" level="project" />
     <orderEntry type="library" name="Leiningen: riddley:0.1.12" level="project" />
     <orderEntry type="library" name="Leiningen: ring-cors:0.1.13" level="project" />
     <orderEntry type="library" name="Leiningen: ring/ring-codec:1.1.1" level="project" />

@@ -1,0 +1,4 @@
+{:up ["ALTER TABLE design
+       ADD COLUMN design_type text;"]
+ :down ["ALTER TABLE design
+         DROP COLUMN design_type;"] }

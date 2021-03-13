@@ -27,6 +27,8 @@
    :uid               string?
    :public            boolean?
    :total-votes       int?
+   :short-url         (s/nilable string?)
+   :design-type       (s/nilable string?)
    (ds/opt :versions) [version]
    (ds/opt :opinions) [opinion]})
 

@@ -30,6 +30,7 @@ CREATE TABLE design
  description text,
  question    text,
  short_url   text,
+ design_type text,
  total_votes int CHECK (total_votes >= 0) DEFAULT 0,
  uid text NOT NULL REFERENCES account(uid) ON DELETE CASCADE
 );
