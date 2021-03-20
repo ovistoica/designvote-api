@@ -56,8 +56,10 @@
   [db]
   (fn [request]
     (let [design-id (-> request :parameters :path :design-id)
-          design (-> request :parameters :body)
-          updated? (designs-db/update-design! db (assoc design :design-id design-id))]
+          design-body (-> request :parameters :body)
+          ; remove nil values as to not have side effects in db
+          to-update (into {} (remove (comp nil? val) design-body))
+          updated? (designs-db/update-design! db (assoc to-update :design-id design-id))]
       (if updated?
         (rr/status 204)
         (rr/not-found {:type    "design-not-found"
@@ -73,7 +75,7 @@
           req-versions (-> request :parameters :body :versions)
           versions (into [] (map #(assoc % :design-id design-id
                                            :version-id (str (UUID/randomUUID))) req-versions))
-          created? (designs-db/insert-multiple-design-versions! db versions)]
+          created? (designs-db/insert-multiple-design-versions! db versions )]
       (if created? (rr/created (str responses/base-url "/designs/" design-id)
                                {:design-id design-id})
                    {:status  500

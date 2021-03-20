@@ -39,10 +39,11 @@
                      :middleware [[mw/wrap-design-owner db]]
                      :responses  {204 {:body nil?}}
                      :parameters {:path {:design-id string?}
-                                  :body {:name        string?
-                                         :description string?
-                                         :img         string?
-                                         :public      boolean?}}
+                                  :body {:name        (s/nilable string?)
+                                         :description (s/nilable string?)
+                                         :img         (s/nilable string?)
+                                         :public      (s/nilable boolean?)
+                                         :design-type (s/nilable string?)}}
                      :summary    "Update design"}
         :delete     {:handler    (design/delete-design! db)
                      :middleware [[mw/wrap-design-owner db]]
