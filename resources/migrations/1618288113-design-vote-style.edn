@@ -1,0 +1,4 @@
+{:up ["ALTER TABLE design
+       ADD COLUMN vote_style text;"]
+ :down ["ALTER TABLE design
+         DROP COLUMN vote_style;"] }

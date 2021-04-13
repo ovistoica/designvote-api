@@ -9,7 +9,7 @@
             [buddy.core.hash :as h]
             [buddy.core.codecs :as c]
             [ragtime.jdbc :as rjdbc]
-            [ragtime.repl :as repl] ))
+            [ragtime.repl :as repl]))
 
 
 (ig-repl/set-prep!
@@ -34,7 +34,8 @@
 (def db-url (-> "dev/resources/config.edn" slurp ig/read-string :db/postgres :jdbc-url))
 (def config
   {:datastore  (rjdbc/sql-database {:connection-uri db-url})
-   :migrations (rjdbc/load-resources "migrations")})
+   :migrations (rjdbc/load-resources "migrations")
+   :reporter   println})
 
 (println (:connectable db))
 

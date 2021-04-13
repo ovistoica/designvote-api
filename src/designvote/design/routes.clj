@@ -18,7 +18,9 @@
                     :parameters {:body {:name        string?
                                         :description (s/nilable string?)
                                         :question    (s/nilable string?)
-                                        :img         (s/nilable string?)}}
+                                        :img         (s/nilable string?)
+                                        :design-type string?
+                                        :vote-style  string?}}
                     :summary    "Create a design"}
        }]
      ["/short"
