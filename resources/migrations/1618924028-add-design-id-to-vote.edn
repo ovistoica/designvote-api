@@ -1,0 +1,4 @@
+{:up ["ALTER TABLE vote
+       ADD COLUMN design_id text REFERENCES design (design_id) ON DELETE CASCADE;"]
+ :down ["ALTER TABLE vote
+         DROP COLUMN design_id;"] }

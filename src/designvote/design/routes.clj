@@ -94,8 +94,10 @@
       ["/votes"
        {:post   {:handler    (design/vote-design! db)
                  :parameters {:path {:design-id string?}
-                              :body {:version-id string?
-                                     :opinion    (s/nilable string?)}}
+                              :body {:vote-style string?
+                                     :version-id string?
+                                     :rating     (s/nilable number?)
+                                     :voter-id   string?}}
                  :responses  {204 {:body nil?}}
                  :summary    "Vote design version"}
         :delete {:handler    (design/unvote-design! db)

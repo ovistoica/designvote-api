@@ -39,6 +39,10 @@
 
 (println (:connectable db))
 
+(def vote-query
+  {:version-id "82d35d4e-4474-4a89-bdc1-0649e368ee6f"
+   :uid   "anonymous|6d18ccf5-1f54-413b-8d67-9f68a31da5a4"}
+  )
 
 
 
@@ -49,7 +53,12 @@
                 )]
     (res))
 
+  (if-let [[existent-vote] (sql/find-by-keys db :vote vote-query)]
+    (print "Found it" existent-vote)
+    (print "Didnt find it"))
 
-  (into {} (remove (comp nil? val) (:body test)))
+
   (repl/migrate config)
+
+
   )

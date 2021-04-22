@@ -65,6 +65,7 @@
 
 (defn delete-design!
   [db design]
+  ;TODO DELETE DESIGN VERSIONS VOTES AND OPINIONS
   (-> (sql/delete! db :design design)
       :next.jdbc/update-count
       (pos?)))
@@ -129,20 +130,47 @@
 
 (def not-nil? (complement nil?))
 
-(defn vote-design-version!
-  [db {:keys [version-id design-id opinion] :as data}]
-  (jdbc/with-transaction [tx db]
-                         (sql/insert! tx :vote (select-keys data [:version-id :vote-id :uid]) (:options db))
-                         (when (not-nil? opinion)
-                           (sql/insert! tx :opinion
-                                        (select-keys data [:design-id :version-id :opinion :uid])
-                                        (:options db)))
-                         (jdbc/execute-one! tx ["UPDATE design
+
+(defn choose-vote-design-version!
+  "Vote on a design version. If the user has
+  already voted on that version, update his
+  vote and don't make a new entry in db"
+  [db {:keys [version-id design-id uid] :as data}]
+  (let [vote-query {:design-id design-id :uid uid}
+        db-opts (:options db)
+        new-vote (select-keys data [:version-id :uid :vote-id :design-id])]
+    (jdbc/with-transaction [tx db]
+                           (if-let [existent-vote (not-empty (sql/find-by-keys tx :vote vote-query db-opts))]
+                             (sql/update! tx :vote {:version-id version-id} vote-query db-opts)
+                             (do
+                               (sql/insert! tx :vote new-vote db-opts)
+                               (jdbc/execute-one! tx ["UPDATE design
                             SET total_votes = total_votes + 1
                             WHERE design_id = ?" design-id])
-                         (jdbc/execute-one! tx ["UPDATE design_version
+                               (jdbc/execute-one! tx ["UPDATE design_version
                             SET votes = votes + 1
-                            WHERE version_id = ?" version-id])))
+                            WHERE version_id = ?" version-id]))))))
+
+(defn rate-vote-design-version!
+  "Vote on a design version. If the user has
+  already voted on that version, update his
+  vote and don't make a new entry in db"
+  [db {:keys [version-id design-id uid rating] :as data}]
+  (let [vote-keys {:version-id version-id :uid uid}
+        db-opts (:options db)
+        new-vote (select-keys data [:version-id :uid :rating :vote-id])]
+    (jdbc/with-transaction [tx db]
+                           (if-let [existent-vote (-> (sql/find-by-keys tx :vote vote-keys db-opts)
+                                                      not-empty)]
+                             (sql/update! tx :vote {:rating rating} vote-keys db-opts)
+                             (do
+                               (sql/insert! tx :vote new-vote db-opts)
+                               (jdbc/execute-one! tx ["UPDATE design
+                            SET total_votes = total_votes + 1
+                            WHERE design_id = ?" design-id])
+                               (jdbc/execute-one! tx ["UPDATE design_version
+                            SET votes = votes + 1
+                            WHERE version_id = ?" version-id]))))))
 
 (defn unvote-design-version!
   [db {:keys [version-id design-id vote-id]}]

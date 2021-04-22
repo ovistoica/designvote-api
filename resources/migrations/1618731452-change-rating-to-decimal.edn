@@ -1,0 +1,4 @@
+{:up ["ALTER TABLE vote
+       ALTER COLUMN rating TYPE NUMERIC(3,2);"]
+ :down ["ALTER TABLE vote
+         ALTER COLUMN rating TYPE INT;"] }

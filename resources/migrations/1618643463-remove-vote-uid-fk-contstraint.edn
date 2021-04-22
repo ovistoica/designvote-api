@@ -1,0 +1,12 @@
+; Remove vote uid fkey constraint to make it possible
+; to have anonymous voting and keep an evidence of
+; what the person has voted on even of anonymous.
+; Therefore, we implement anonymous Id's. Format: "anonymous|rand-om-uuid"
+; They will not be stored in the account table.
+{:up ["ALTER TABLE vote
+       DROP CONSTRAINT vote_uid_fkey;"]
+ :down ["ALTER TABLE vote
+          ADD CONSTRAINT vote_uid_fkey
+          FOREIGN KEY (uid)
+          REFERENCES account (uid)
+          ON DELETE SET NULL;"]}

@@ -75,7 +75,7 @@
           req-versions (-> request :parameters :body :versions)
           versions (into [] (map #(assoc % :design-id design-id
                                            :version-id (str (UUID/randomUUID))) req-versions))
-          created? (designs-db/insert-multiple-design-versions! db versions )]
+          created? (designs-db/insert-multiple-design-versions! db versions)]
       (if created? (rr/created (str responses/base-url "/designs/" design-id)
                                {:design-id design-id})
                    {:status  500
@@ -117,16 +117,20 @@
 (defn vote-design!
   [db]
   (fn [request]
-    (let [uid (-> request :claims :sub)
-          design-id (-> request :parameters :path :design-id)
-          version-id (-> request :parameters :body :version-id)
-          opinion (-> request :parameters :body :opinion)
+    (let [design-id (-> request :parameters :path :design-id)
+          {:keys [voter-id version-id rating vote-style]} (-> request :parameters :body)
           vote-id (str (UUID/randomUUID))]
-      (designs-db/vote-design-version! db {:vote-id    vote-id
-                                           :uid        (or uid nil)
-                                           :opinion    opinion
-                                           :version-id version-id
-                                           :design-id  design-id})
+      (if (= vote-style "five-star")
+          (designs-db/rate-vote-design-version! db {:vote-id    vote-id
+                                                    :uid        voter-id
+                                                    :rating     rating
+                                                    :version-id version-id
+                                                    :design-id  design-id})
+          (designs-db/choose-vote-design-version! db {:vote-id    vote-id
+                                                      :uid        voter-id
+                                                      :version-id version-id
+                                                      :design-id  design-id}))
+
       (rr/created (str responses/base-url "/designs/" design-id) {:design-id  design-id
                                                                   :version-id version-id
                                                                   :vote-id    vote-id}))))

@@ -1,0 +1,4 @@
+{:up ["ALTER TABLE vote
+       ADD COLUMN rating int;"]
+ :down ["ALTER TABLE vote
+         DROP COLUMN rating;"] }

@@ -39,7 +39,7 @@
   [_ {:keys [jdbc-url]}]
   (println (str "\nConfigured db " jdbc-url))
   (jdbc/with-options
-    (njc/->pool HikariDataSource {:jdbcUrl jdbc-url}) jdbc/unqualified-snake-kebab-opts)
+    (njc/->pool HikariDataSource {:jdbcUrl jdbc-url :maximumPoolSize 8}) jdbc/unqualified-snake-kebab-opts)
   #_(jdbc/with-options jdbc-url jdbc/unqualified-snake-kebab-opts))
 
 
