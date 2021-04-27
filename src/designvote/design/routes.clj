@@ -25,7 +25,7 @@
        }]
      ["/short"
       ["/:short-url"
-       {:get {:handler    (design/find-design-by-url! db)
+       {:get {:handler    (design/find-design-by-url db)
               :responses  {200 {:body responses/design}}
               :parameters {:path {:short-url string?}}
               :summary    "Retrieve design by short url"}}
@@ -104,7 +104,14 @@
                  :parameters {:path {:design-id string?}
                               :body {:version-id string?}}
                  :responses  {204 {:body nil?}}
-                 :summary    "Unvote design version"}}]]
-
-     ]))
+                 :summary    "Unvote design version"}}]
+      ["/opinions"
+       {:post {:summary    "Add a opinion about a design version"
+               :handler    (design/add-opinion! db)
+               :parameters {:path {:design-id string?}
+                            :body {:version-id string?
+                                   :opinion    string?
+                                   :voter-id   string?}}
+               :responses  {204 {:body map?}
+                            500 {:body map?}}}}]]]))
 

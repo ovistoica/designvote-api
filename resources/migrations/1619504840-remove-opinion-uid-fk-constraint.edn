@@ -1,0 +1,12 @@
+; Remove opinion uid fkey constraint to make it possible
+; to have anonymous comments and keep an evidence of
+; what the person has created an opinion.
+; Therefore, we implement anonymous Id's. Format: "anonymous|rand-om-uuid"
+; They will not be stored in the account table.
+{:up ["ALTER TABLE opinion
+       DROP CONSTRAINT opinion_uid_fkey;"]
+ :down ["ALTER TABLE opinion
+          ADD CONSTRAINT opinion_uid_fkey
+          FOREIGN KEY (uid)
+          REFERENCES account (uid)
+          ON DELETE SET NULL;"]}

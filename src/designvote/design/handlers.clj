@@ -3,7 +3,7 @@
             [designvote.responses :as responses]
             [designvote.design.db :as designs-db]
             [buddy.core.hash :as hash]
-            [buddy.core.codecs :as decode]
+            [clojure.set :refer [rename-keys]]
             [buddy.core.codecs :as c])
   (:import java.util.UUID))
 
@@ -121,15 +121,15 @@
           {:keys [voter-id version-id rating vote-style]} (-> request :parameters :body)
           vote-id (str (UUID/randomUUID))]
       (if (= vote-style "five-star")
-          (designs-db/rate-vote-design-version! db {:vote-id    vote-id
+        (designs-db/rate-vote-design-version! db {:vote-id    vote-id
+                                                  :uid        voter-id
+                                                  :rating     rating
+                                                  :version-id version-id
+                                                  :design-id  design-id})
+        (designs-db/choose-vote-design-version! db {:vote-id    vote-id
                                                     :uid        voter-id
-                                                    :rating     rating
                                                     :version-id version-id
-                                                    :design-id  design-id})
-          (designs-db/choose-vote-design-version! db {:vote-id    vote-id
-                                                      :uid        voter-id
-                                                      :version-id version-id
-                                                      :design-id  design-id}))
+                                                    :design-id  design-id}))
 
       (rr/created (str responses/base-url "/designs/" design-id) {:design-id  design-id
                                                                   :version-id version-id
@@ -160,14 +160,24 @@
       (if published? (rr/status 204)
                      (rr/bad-request {:design-id design-id})))))
 
-(defn find-design-by-url!
+(defn find-design-by-url
   [db]
   (fn [request]
-    (let [short-url (-> request :parameters :path :short-url)
-          design (designs-db/find-design-by-url! db short-url)]
-      (if design
+    (let [short-url (-> request :parameters :path :short-url)]
+      (if-let [design (designs-db/find-design-by-url db short-url)]
         (rr/response design)
         (rr/not-found {:type    "design-not-found"
                        :message "Design not found"
-                       :data    (str "short-url" short-url)}))
-      )))
+                       :data    (str "short-url" short-url)})))))
+
+(defn add-opinion! [db]
+  (fn [{:keys [parameters]}]
+    (let [design-id (-> parameters :path :design-id)
+          body (:body parameters)
+          opinion (-> body
+                      (assoc :design-id design-id)
+                      (rename-keys {:voter-id :uid}))]
+      (if-let [opinion (designs-db/insert-opinion! db opinion)]
+        (rr/created (str responses/base-url "/designs/" design-id) opinion)
+        (rr/not-found {:type    "design-not-found"
+                       :message "design not found"})))))

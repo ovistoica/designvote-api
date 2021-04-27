@@ -1,7 +1,6 @@
 (ns designvote.design.db
   (:require [next.jdbc.sql :as sql]
-            [next.jdbc :as jdbc]
-            [next.jdbc.prepare :as p])
+            [next.jdbc :as jdbc])
   (:import java.util.UUID))
 
 
@@ -9,18 +8,6 @@
   [db uid]
   (let [designs (sql/find-by-keys db :design {:uid uid})]
     designs))
-
-(defn find-all-designs!
-  [db uid]
-  (with-open [conn (jdbc/get-connection db)]
-    (let [conn-opts (jdbc/with-options conn (:options db))
-          public (sql/find-by-keys conn-opts :design {:public true})]
-      (if uid
-        (let [drafts (sql/find-by-keys conn-opts :design {:public false
-                                                          :uid    uid})]
-          {:public public
-           :drafts drafts})
-        {:public public}))))
 
 (defn insert-design!
   [db design]
@@ -34,12 +21,12 @@
   (into []
         (doall
           (for [{:keys [version-id] :as version} versions
-                :let [pictures
-                      (sql/find-by-keys conn :picture
-                                        {:version-id version-id})
-                      votes (sql/find-by-keys conn :vote
-                                              {:version-id version-id})]]
-            (assoc version :pictures pictures :votes votes)))))
+                :let [
+                      query {:version-id version-id}
+                      pictures (sql/find-by-keys conn :picture query)
+                      votes (sql/find-by-keys conn :vote query)
+                      opinions (sql/find-by-keys conn :opinion query)]]
+            (assoc version :pictures pictures :votes votes :opinions opinions)))))
 
 (defn find-design-by-id!
   [db design-id]
@@ -184,7 +171,7 @@
                             WHERE version_id = ?" version-id])))
 
 
-(defn find-design-by-url!
+(defn find-design-by-url
   [db short-url]
   (with-open [conn (jdbc/get-connection db)]
 
@@ -201,6 +188,12 @@
             design))
         nil))))
 
+(defn insert-opinion!
+  "Insert an opinion in db. Necessary keys on opinion map:
+   `:design-id` - FK for id of design
+   `:version-id` - FK for id of version
+   `:opinion` - The actual opinion text "
+  [db opinion-map]
+  (sql/insert! db :opinion opinion-map))
 
-(comment
-  )
+

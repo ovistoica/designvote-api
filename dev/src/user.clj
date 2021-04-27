@@ -9,17 +9,12 @@
             [buddy.core.hash :as h]
             [buddy.core.codecs :as c]
             [ragtime.jdbc :as rjdbc]
+            [clojure.set :refer [rename-keys]]
             [ragtime.repl :as repl]))
 
 
 (ig-repl/set-prep!
   (fn [] (-> "dev/resources/config.edn" slurp ig/read-string)))
-(def test {:a    "h"
-           :body {
-                  :a "heoi"
-                  :b nil
-                  :c "12"
-                  }})
 
 (def go ig-repl/go)
 (def halt ig-repl/halt)
@@ -30,14 +25,12 @@
 (def db (-> state/system :db/postgres))
 
 
-; Config for db migrations
+; config for db migrations
 (def db-url (-> "dev/resources/config.edn" slurp ig/read-string :db/postgres :jdbc-url))
 (def config
   {:datastore  (rjdbc/sql-database {:connection-uri db-url})
    :migrations (rjdbc/load-resources "migrations")
    :reporter   println})
-
-(println (:connectable db))
 
 (def vote-query
   {:version-id "82d35d4e-4474-4a89-bdc1-0649e368ee6f"
@@ -54,8 +47,8 @@
     (res))
 
   (if-let [[existent-vote] (sql/find-by-keys db :vote vote-query)]
-    (print "Found it" existent-vote)
-    (print "Didnt find it"))
+    (print "found it" existent-vote)
+    (print "didnt find it"))
 
 
   (repl/migrate config)
