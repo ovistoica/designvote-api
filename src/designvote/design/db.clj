@@ -179,11 +179,14 @@
           [design] (sql/find-by-keys conn-opts :design
                                      {:short-url short-url})]
       (if design
-        (let [query (select-keys design [:design-id])
+        (let [{:keys [nickname]} (jdbc/execute-one! conn-opts ["SELECT nickname FROM account WHERE
+                                                      uid = ? " (:uid design)])
+              query (select-keys design [:design-id])
               versions (sql/find-by-keys conn-opts :design-version query)
               opinions (sql/find-by-keys conn-opts :opinion query)]
           (if (not (empty? versions))
-            (assoc design :opinions opinions
+            (assoc design :nickname nickname
+                          :opinions opinions
                           :versions (build-versions conn-opts versions))
             design))
         nil))))
@@ -197,3 +200,35 @@
   (sql/insert! db :opinion opinion-map))
 
 
+(defn build-ratings [ratings design-id voter-name]
+  (let [db-ratings
+        (into [] (for [[k v] ratings] {:version-id k
+                                       :rating     v
+                                       :design-id  design-id
+                                       :vote-id    (str (UUID/randomUUID))
+                                       :voter-name voter-name}))]
+    db-ratings))
+
+(defn build-comments [comments design-id voter-name]
+  (let [db-comments
+        (into [] (for [[k v] comments] {:version-id k
+                                        :opinion    v
+                                        :design-id  design-id
+                                        :voter-name voter-name}))]
+    db-comments))
+
+
+(defn insert-feedback!
+  "Insert comments and ratings in the opinion and vote tables
+  for a specific design"
+  [db {:keys [design-id ratings comments voter-name]}]
+  (let [db-comments (build-comments comments design-id voter-name)
+        comment-cols [:version-id :design-id :voter-name :opinion]
+        db-ratings (build-ratings ratings design-id voter-name)
+        rating-cols [:version-id :vote-id :design-id :voter-name :rating]]
+    (jdbc/with-transaction
+      [tx db]
+      (do (sql/insert-multi! tx :opinion comment-cols
+                             (map (apply juxt comment-cols) db-comments) (:options db))
+          (sql/insert-multi! tx :vote rating-cols
+                             (map (apply juxt rating-cols) db-ratings) (:options db))))))

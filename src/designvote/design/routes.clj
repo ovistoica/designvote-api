@@ -91,6 +91,13 @@
                 :summary    "Upload multiple design versions"}}
         ]
        ]
+      ["/feedback"
+       {:post {:summary    "Give feedback on a design (ratings and comments)"
+               :handler    (design/give-feedback! db)
+               :parameters {:path {:design-id string?}
+                            :body {:voter-name     (s/nilable string?)
+                                   :ratings  vector?
+                                   :comments vector?}}}}]
       ["/votes"
        {:post   {:handler    (design/vote-design! db)
                  :parameters {:path {:design-id string?}

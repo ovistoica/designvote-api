@@ -181,3 +181,10 @@
         (rr/created (str responses/base-url "/designs/" design-id) opinion)
         (rr/not-found {:type    "design-not-found"
                        :message "design not found"})))))
+
+(defn give-feedback! [db]
+  (fn [{:keys [parameters]}]
+    (let [body (:body parameters)
+          design-id (-> parameters :path :design-id)]
+      (designs-db/insert-feedback! db (assoc body :design-id design-id))
+      (rr/created (str responses/base-url "/designs/" design-id)))))

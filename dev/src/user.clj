@@ -34,17 +34,40 @@
 
 (def vote-query
   {:version-id "82d35d4e-4474-4a89-bdc1-0649e368ee6f"
-   :uid   "anonymous|6d18ccf5-1f54-413b-8d67-9f68a31da5a4"}
+   :uid        "anonymous|6d18ccf5-1f54-413b-8d67-9f68a31da5a4"}
   )
 
+(def test-ratings {"82d35d4e-4474-4a89-bdc1-0649e368ee6f" 12
+                   "82d35d4e-4474-4a89-bdc1-0649e368ee6a" 14})
 
 
+;[{:rating     rating
+;  :design-id  design-id
+;  :version-id version-id
+;  :voter-name voter-name}]
+
+(defn insert-feedback!
+  [{:keys [design-id ratings comments voter-name]}]
+  (let [])
+  )
 
 (comment
   (let [res (-> test :body
                 (into {} (remove (comp nil? val)))
                 )]
     (res))
+  (let [kv-pairs (vec test-ratings)
+        db-ratings (into [] (for [[k v] kv-pairs] {:version-id k
+                                                   :rating     v}))]
+    (println db-ratings)
+    db-ratings)
+
+  (let [db-ratings (-> test-ratings
+                       (vec)
+                       (map #({:version-id (first %)
+                               :rating     (last %)}))
+                       )]
+    db-ratings)
 
   (if-let [[existent-vote] (sql/find-by-keys db :vote vote-query)]
     (print "found it" existent-vote)
@@ -52,6 +75,5 @@
 
 
   (repl/migrate config)
-
 
   )

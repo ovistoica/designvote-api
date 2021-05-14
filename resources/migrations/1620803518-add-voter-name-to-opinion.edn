@@ -1,0 +1,4 @@
+{:up   ["ALTER TABLE opinion
+       ADD COLUMN voter_name text;"]
+ :down ["ALTER TABLE opinion
+          DROP COLUMN voter_name;"]}
