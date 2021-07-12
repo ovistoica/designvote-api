@@ -7,7 +7,8 @@
             [next.jdbc :as jdbc]
             [next.jdbc.connection :as njc])
   (:import
-    (com.zaxxer.hikari HikariDataSource)))
+    (com.zaxxer.hikari HikariDataSource)
+    (org.eclipse.jetty.server Server)))
 
 (defn app
   [env]
@@ -53,8 +54,8 @@
   auth0)
 
 (defmethod ig/halt-key! :server/jetty
-  [_ config]
-  (.stop config))
+  [_ ^Server server]
+  (.stop server))
 
 (defn -main
   [config-file]

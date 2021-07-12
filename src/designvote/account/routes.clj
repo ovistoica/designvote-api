@@ -6,7 +6,7 @@
   [env]
   (let [db (:jdbc-url env)
         auth0 (:auth0 env)]
-    ["/account" {:swagger {:tags ["account"]} }
+    ["/account" {:swagger {:tags ["account"]}}
      [""
       {:post   {:handler    (account/create-account! db)
                 :responses  {201 {:body any?}}

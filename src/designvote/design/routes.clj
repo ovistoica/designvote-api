@@ -21,15 +21,15 @@
                                         :img         (s/nilable string?)
                                         :design-type string?
                                         :vote-style  string?}}
-                    :summary    "Create a design"}
-       }]
-     ["/short"
+                    :summary    "Create a design"}}]
+
+     ["/vote/short"
       ["/:short-url"
        {:get {:handler    (design/find-design-by-url db)
               :responses  {200 {:body responses/design}}
               :parameters {:path {:short-url string?}}
-              :summary    "Retrieve design by short url"}}
-       ]]
+              :summary    "Retrieve design by short url"}}]]
+
      ["/:design-id"
       [""
        {:middleware [[mw/wrap-auth0]]
@@ -57,9 +57,9 @@
         :post       {:handler    (design/publish-design! db)
                      :response   {201 {:body {:design-id string?}}}
                      :parameters {:path {:design-id string?}}
-                     :summary    "Publish a design to be ready for voting"}}
+                     :summary    "Publish a design to be ready for voting"}}]
 
-       ]
+
       ["/versions" {:middleware [[mw/wrap-auth0] [mw/wrap-design-owner db]]}
        [""
         {:post   {:handler    (design/add-design-version! db)
@@ -88,9 +88,9 @@
                              :body {:versions [{:name        string?
                                                 :pictures    vector?
                                                 :description (s/nilable string?)}]}}
-                :summary    "Upload multiple design versions"}}
-        ]
-       ]
+                :summary    "Upload multiple design versions"}}]]
+
+
       ["/feedback"
        {:post {:summary    "Give feedback on a design (ratings and comments)"
                :handler    (design/give-feedback! db)
