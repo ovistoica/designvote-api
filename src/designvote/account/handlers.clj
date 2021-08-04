@@ -3,8 +3,12 @@
             [designvote.account.db :as account-db]
             [clj-http.client :as http]
             [designvote.auth0 :as auth0]
+            [designvote.payment.core :as pay]
             [muuntaja.core :as m]
             [designvote.responses :as responses]))
+
+
+(defonce ^:private security-token "VIZFDFAlCzwze9g")
 
 ;; After an account has been created in auth0, store it
 ;; in the local DB. Also used in local tests
@@ -28,13 +32,15 @@
     (let [body (-> request :parameters :body)
           user (dissoc body :token)
           token (:token body)]
-      (if (= token "VIZFDFAlCzwze9g")
-        (do (account-db/create-account! db user)
-            (rr/created (str responses/base-url "/accounts/" (:uid user)) user))
+      (if (= token security-token)
+        (do (let [stripe-id (get (pay/create-costumer user) :id)
+                  created? (account-db/create-account! db (assoc user :stripe-id stripe-id))]
+              (when created?
+                (rr/created (str responses/base-url "/accounts/" (:uid user)) user))))
         {:status  401
          :headers {}
-         :body    {:message "Unauthorised"}})
-      )))
+         :body    {:message "Unauthorised"}}))))
+
 
 
 
@@ -51,3 +57,4 @@
       (when (= (:status deleted-auth0-account!) 204)
         (account-db/delete-account! db {:uid uid})
         (rr/status 204)))))
+

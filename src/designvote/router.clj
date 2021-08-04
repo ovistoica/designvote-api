@@ -14,8 +14,8 @@
             [designvote.account.routes :as account]
             [designvote.design.routes :as design]
             [ring.middleware.cors :as cors]
-            [reitit.exception :as r-exception]
-            ))
+            [reitit.exception :as r-exception]))
+
 
 
 (def swagger-docs
@@ -56,8 +56,8 @@
       [swagger-docs
        ["/v1"
         (design/routes env)
-        (account/routes env)
-        ]]
+        (account/routes env)]]
+
       router-config)
     (ring/routes
       (swagger-ui/create-swagger-ui-handler {:path "/"})

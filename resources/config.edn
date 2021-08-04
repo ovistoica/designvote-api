@@ -1,6 +1,6 @@
-{:server/jetty {:handler #ig/ref :designvote/app
-                :port    3000}
- :designvote/app   {:jdbc-url #ig/ref :db/postgres
-                :auth0    #ig/ref :auth/auth0}
- :db/postgres  {:jdbc-url ""}
- :auth/auth0   {:client-secret ""}}
+{:server/jetty   {:handler #ig/ref :designvote/app
+                  :port    3000}
+ :designvote/app {:jdbc-url #ig/ref :db/postgres
+                  :auth0    #ig/ref :auth/auth0}
+ :db/postgres    {:jdbc-url ""}
+ :auth/auth0     {:client-secret ""}}

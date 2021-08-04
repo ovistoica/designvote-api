@@ -34,8 +34,8 @@
           :body             (m/encode "application/json"
                                       {:connection connection
                                        :email      email
-                                       :password   password})
-          }
+                                       :password   password})}
+
          (http/post "https://designvote.eu.auth0.com/api/v2/users")
          (m/decode-response-body))))
 
@@ -65,8 +65,8 @@
   (test-endpoint :get "/v1/designs" {:auth true})
   (test-endpoint :post "/v1/designs" {:auth true :body {:name        "My new design"
                                                         :description "Helooo design"
-                                                        :img         "My image"
-                                                        }})
+                                                        :img         "My image"}})
+
   (test-endpoint :get "/v1/designs/89985a6c-6864-4a43-9e90-b92aee727048")
   (get-test-token "testing@designvote.io")
   (create-auth0-user {:connection "Username-Password-Authentication"

@@ -24,8 +24,8 @@
 (def design
   {:name        "My new design"
    :description "Helooo design"
-   :img         "My image"
-   })
+   :img         "My image"})
+
 
 (def version {:name        "Design option 1"
               :pictures    ["Picture 1" "Picture 2"]

@@ -37,8 +37,8 @@
         (rr/response design)
         (rr/not-found {:type    "design-not-found"
                        :message "Design not found"
-                       :data    (str "design-id" design-id)}))
-      )))
+                       :data    (str "design-id" design-id)})))))
+
 
 (defn delete-design!
   [db]
@@ -49,8 +49,8 @@
         (rr/status 204)
         (rr/not-found {:type    "design-not-found"
                        :message "Design not found"
-                       :data    (str "design-id" design-id)}))
-      )))
+                       :data    (str "design-id" design-id)})))))
+
 
 (defn update-design!
   [db]
@@ -64,8 +64,8 @@
         (rr/status 204)
         (rr/not-found {:type    "design-not-found"
                        :message "Design not found"
-                       :data    (str "design-id" design-id)}))
-      )))
+                       :data    (str "design-id" design-id)})))))
+
 
 
 (defn add-multiple-design-versions
@@ -111,8 +111,8 @@
           deleted? (designs-db/delete-design-version! db {:version-id version-id})]
       (if deleted?
         (rr/status 204)
-        (rr/bad-request {:version-id version-id}))
-      )))
+        (rr/bad-request {:version-id version-id})))))
+
 
 (defn vote-design!
   [db]
