@@ -23,9 +23,6 @@
 (def app (-> state/system :designvote/app))
 (def db (-> state/system :db/postgres))
 
-db
-
-
 ; config for db migrations
 (def db-url (-> "dev/resources/config.edn" slurp ig/read-string :db/postgres :jdbc-url))
 (def config
