@@ -62,7 +62,3 @@
   (let [config (-> config-file slurp ig/read-string)]
     (-> config ig/prep ig/init)))
 
-(comment
-  (app {:request-method :get
-        :uri            "/"})
-  (-main))

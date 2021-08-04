@@ -14,3 +14,4 @@ pom.xml.asc
 .idea
 dev/resources/config.edn
 .lsp/
+dev-config.edn

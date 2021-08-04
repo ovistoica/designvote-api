@@ -1,0 +1,2 @@
+ALTER TABLE account
+DROP COLUMN IF EXISTS stripe_id;

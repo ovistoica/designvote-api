@@ -5,13 +5,11 @@
             [designvote.server]
             [next.jdbc :as jdbc]
             [next.jdbc.sql :as sql]
-            [designvote.design.db :as design-db]
-            [buddy.core.hash :as h]
-            [buddy.core.codecs :as c]
             [ragtime.jdbc :as rjdbc]
+            [designvote.account.db :as adb]
+            [designvote.account.handlers :as h]
             [clojure.set :refer [rename-keys]]
-            [ragtime.repl :as repl]
-            [designvote.design.db :as designs-db]))
+            [ragtime.repl :as repl]))
 
 
 (ig-repl/set-prep!
@@ -55,6 +53,25 @@ db
 
 
 (comment
+
+  (repl/migrate config)
+
+
+  (adb/create-account! db {:email "test@awdawd.com"
+                           :name "test"
+                           :uid "awdawd"})
+
+
+  (def handler (h/create-account! db))
+
+  (def request {:parameters {:body {:token "VIZFDFAlCzwze9g"
+                                    :uid "this_is_a_test3"
+                                    :email "test_new_handler@test3.com"
+                                    :name "Test Handler"}}})
+
+  (sql/find-by-keys db :account {:uid "this_is_a_test3"})
+
+  (handler request)
 
   (design-db/find-all-user-designs! db "google-oauth2|117984597083645660112"))
 
