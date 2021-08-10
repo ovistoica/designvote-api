@@ -4,6 +4,7 @@
             [designvote.design.db :as designs-db]
             [buddy.core.hash :as hash]
             [clojure.set :refer [rename-keys]]
+            [designvote.design.core :as d]
             [buddy.core.codecs :as c])
   (:import java.util.UUID))
 
@@ -22,10 +23,14 @@
     (let [design-id (str (UUID/randomUUID))
           uid (-> request :claims :sub)
           design (-> request :parameters :body)]
-      (designs-db/insert-design! db (assoc design :uid uid
-                                                  :design-id design-id
-                                                  :public false))
-      (rr/created (str responses/base-url "/designs/" design-id) {:design-id design-id}))))
+      (if (d/can-create-design? db uid)
+        (do
+          (designs-db/insert-design! db (assoc design :uid uid
+                                                      :design-id design-id
+                                                      :public false))
+          (rr/created (str responses/base-url "/designs/" design-id) {:design-id design-id}))
+        {:status 401
+         :body {:message "Please upgrade to premium to create more designs"}}))))
 
 
 (defn retrieve-design!

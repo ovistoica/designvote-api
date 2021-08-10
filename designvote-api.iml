@@ -40,6 +40,7 @@
     <orderEntry type="library" name="Leiningen: com.fasterxml.jackson.dataformat/jackson-dataformat-smile:2.9.9" level="project" />
     <orderEntry type="library" name="Leiningen: com.fasterxml.jackson.datatype/jackson-datatype-jsr310:2.11.0" level="project" />
     <orderEntry type="library" name="Leiningen: com.gfredericks/test.chuck:0.2.10" level="project" />
+    <orderEntry type="library" name="Leiningen: com.github.seancorfield/honeysql:2.0.0-rc5" level="project" />
     <orderEntry type="library" name="Leiningen: com.google.code.findbugs/jsr305:3.0.2" level="project" />
     <orderEntry type="library" name="Leiningen: com.google.errorprone/error_prone_annotations:2.2.0" level="project" />
     <orderEntry type="library" name="Leiningen: com.google.guava/failureaccess:1.0.1" level="project" />

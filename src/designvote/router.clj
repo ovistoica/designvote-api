@@ -13,6 +13,7 @@
             [designvote.middleware :as mw]
             [designvote.account.routes :as account]
             [designvote.design.routes :as design]
+            [designvote.payment.routes :as payment]
             [ring.middleware.cors :as cors]
             [reitit.exception :as r-exception]))
 
@@ -29,8 +30,8 @@
      :handler (swagger/create-swagger-handler)}}])
 
 (def router-config
-  {;:reitit.middleware/transform dev/print-request-diffs ;; This is for debugging purposes
-   :validate  rs/validate
+  { :validate  rs/validate
+   ;:reitit.middleware/transform dev/print-request-diffs ;; This is for debugging purposes
    :exception pretty/exception
    :conflicts (fn [conflicts]
                 (println (r-exception/format-exception :path-conflicts nil conflicts)))
@@ -56,7 +57,8 @@
       [swagger-docs
        ["/v1"
         (design/routes env)
-        (account/routes env)]]
+        (account/routes env)
+        (payment/routes env)]]
 
       router-config)
     (ring/routes

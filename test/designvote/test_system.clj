@@ -67,6 +67,7 @@
                                                         :description "Helooo design"
                                                         :img         "My image"}})
 
+
   (test-endpoint :get "/v1/designs/89985a6c-6864-4a43-9e90-b92aee727048")
   (get-test-token "testing@designvote.io")
   (create-auth0-user {:connection "Username-Password-Authentication"

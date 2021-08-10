@@ -7,6 +7,7 @@
             [next.jdbc.sql :as sql]
             [ragtime.jdbc :as rjdbc]
             [designvote.account.db :as adb]
+            [designvote.design.db :as ddb]
             [designvote.account.handlers :as h]
             [clojure.set :refer [rename-keys]]
             [ragtime.repl :as repl]))
@@ -16,8 +17,7 @@
   (fn [] (-> "dev/resources/config.edn" slurp ig/read-string)))
 
 (def go ig-repl/go)
-(def halt ig-repl/halt)
-(def restart ig-repl/reset)
+(def halt ig-repl/halt) (def restart ig-repl/reset)
 (def reset-all ig-repl/reset-all)
 
 (def app (-> state/system :designvote/app))
@@ -49,6 +49,8 @@
   (let []))
 
 
+
+
 (comment
 
   (repl/migrate config)
@@ -59,18 +61,20 @@
                            :uid "awdawd"})
 
 
+  (def handler (h/get-account db))
+
+  (handler {})
+
+  (adb/get-account db "auth0|5ef440986e8fbb001355fd9cgg")
   (def handler (h/create-account! db))
 
-  (def request {:parameters {:body {:token "VIZFDFAlCzwze9g"
-                                    :uid "this_is_a_test3"
-                                    :email "test_new_handler@test3.com"
-                                    :name "Test Handler"}}})
 
   (sql/find-by-keys db :account {:uid "this_is_a_test3"})
 
   (handler request)
 
-  (design-db/find-all-user-designs! db "google-oauth2|117984597083645660112"))
+  (ddb/count-user-designs db "google-oauth2|117984597083645660112")
+  (ddb/find-all-user-designs! db "google-oauth2|117984597083645660112"))
 
 
 

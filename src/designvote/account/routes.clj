@@ -8,7 +8,10 @@
         auth0 (:auth0 env)]
     ["/account" {:swagger {:tags ["account"]}}
      [""
-      {:post   {:handler    (account/create-account! db)
+      {:get    {:handler   (account/get-account db)
+                :responses {200 {:body map?}}
+                :summary "Retrieve current logged in user"}
+       :post   {:handler    (account/create-account! db)
                 :responses  {201 {:body any?}}
                 :parameters {:body {:email    string?
                                     :social   boolean?
@@ -19,13 +22,13 @@
                                     :provider string?
                                     :token    string?}}
                 :summary    "Create an account"}
-       :delete {:handler   (account/delete-account! db auth0)
-                :responses {204 {:body nil?}}
+       :delete {:handler    (account/delete-account! db auth0)
+                :responses  {204 {:body nil?}}
                 :middleware [[mw/wrap-auth0]]
-                :summary   "Delete an account"}}]
+                :summary    "Delete an account"}}]
      ["/uid"
-      {:post {:handler   (account/create-account-from-uid! db auth0)
-              :responses {201 {:body nil}}
+      {:post {:handler    (account/create-account-from-uid! db auth0)
+              :responses  {201 {:body nil}}
               :middleware [[mw/wrap-auth0]]
-              :summary   "Create an account based on user token and id"}}]]))
+              :summary    "Create an account based on user token and id"}}]]))
 

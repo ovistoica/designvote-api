@@ -8,6 +8,7 @@
                  [environ "1.2.0"]
                  [metosin/reitit "0.5.2"]
                  [seancorfield/next.jdbc "1.1.613"]
+                 [com.github.seancorfield/honeysql "2.0.0-rc5"]
                  [org.postgresql/postgresql "42.2.14"]
                  [camel-snake-kebab "0.4.2"]
                  [clj-http "3.10.0"]
@@ -19,6 +20,7 @@
                  [ragtime "0.8.1"]
                  [cprop "0.1.18"]
                  [abengoa/clj-stripe "1.0.4"]]
+
 
   :profiles {:uberjar {:aot      :all
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
