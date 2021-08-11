@@ -5,10 +5,15 @@
             [environ.core :refer [env]]
             [designvote.router :as router]
             [next.jdbc :as jdbc]
-            [next.jdbc.connection :as njc])
+            [next.jdbc.connection :as njc]
+            [designvote.util :as u]
+            [camel-snake-kebab.core :as csk])
   (:import
     (com.zaxxer.hikari HikariDataSource)
-    (org.eclipse.jetty.server Server)))
+    (org.eclipse.jetty.server Server)
+    (clojure.lang Keyword)
+    (java.sql PreparedStatement)
+    (org.postgresql.util PGobject)))
 
 (defn app
   [env]
@@ -47,6 +52,16 @@
 (defmethod ig/halt-key! :db/postgres
   [_ config]
   (.close ^HikariDataSource (:connectable config)))
+
+(defn  write-pg-keyword [^Keyword kw]
+  (doto (PGobject.)
+    (.setType "text")
+    (.setValue (u/keyword->sql-text kw))))
+
+(extend-protocol next.jdbc.prepare/SettableParameter
+  Keyword
+  (set-parameter [m ^PreparedStatement s i]
+    (.setObject s i (write-pg-keyword m))))
 
 (defmethod ig/init-key :auth/auth0
   [_ auth0]

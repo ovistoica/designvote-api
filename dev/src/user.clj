@@ -8,9 +8,11 @@
             [ragtime.jdbc :as rjdbc]
             [designvote.account.db :as adb]
             [designvote.design.db :as ddb]
+            [designvote.payment.handlers :as ph]
             [designvote.account.handlers :as h]
             [clojure.set :refer [rename-keys]]
-            [ragtime.repl :as repl]))
+            [ragtime.repl :as repl]
+            [designvote.payment.core :as p]))
 
 
 (ig-repl/set-prep!
@@ -62,16 +64,23 @@
 
 
   (def handler (h/get-account db))
+  (def check-h (ph/create-checkout-session db))
+
 
   (handler {})
 
-  (adb/get-account db "auth0|5ef440986e8fbb001355fd9cgg")
+  (adb/get-account db "google-oauth2|117984597083645660112")
+  (adb/get-account db "facebook|5841010855939759")
+
+  (adb/update-account! db {:uid "facebook|5841010855939759"} {:stripe-id nil})
   (def handler (h/create-account! db))
 
 
   (sql/find-by-keys db :account {:uid "this_is_a_test3"})
 
   (handler request)
+
+  (p/add-stripe-id-to-user! db (adb/get-account db "google-oauth2|117984597083645660112"))
 
   (ddb/count-user-designs db "google-oauth2|117984597083645660112")
   (ddb/find-all-user-designs! db "google-oauth2|117984597083645660112"))

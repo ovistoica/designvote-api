@@ -3,7 +3,8 @@
             [camel-snake-kebab.core :as csk]
             [camel-snake-kebab.extras :as cske])
   (:import (java.io StringWriter)
-           (java.util UUID)))
+           (java.util UUID)
+           (clojure.lang Keyword)))
 
 
 (defn pprint-to-str
@@ -27,3 +28,10 @@
 (defn ->camelCase [m]
   "Transforms a map to camelCase. Useful for responses for JS frontends"
   (cske/transform-keys csk/->camelCase m))
+
+(defn keyword->sql-text
+  "Transform a keyword to be stored in DB"
+  [^Keyword kw]
+  (-> kw
+      (csk/->snake_case)
+      (name)))

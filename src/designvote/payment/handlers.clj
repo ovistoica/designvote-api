@@ -4,9 +4,22 @@
             [ring.mock.request :as mock]
             [integrant.repl.state :as state]
             [clojure.pprint :as pp]
-            [ring.util.response :as rr]))
+            [ring.util.response :as rr])
+  (:import (clojure.lang ExceptionInfo)))
 
 
+(defn handle-stripe-error
+  [error]
+  (clojure.pprint/pprint error)
+  (let [status (or (:status error)
+                   (get-in error [:response :status])
+                   500)
+        error-code (or (:error-code error)
+                       "internal_server_error")
+        message (:message error)]
+    {:status status
+     :body   {:error-code error-code
+              :message    message}}))
 
 
 (defn create-checkout-session
@@ -17,18 +30,18 @@
   (fn [req]
     (let [uid (-> req :claims :sub)
           session-info (-> req :parameters :body)
-          user (user-db/get-account db uid)]
-      (when-not (:stripe-id user)
-        (p/add-stripe-id-to-user! db user))
+          user (user-db/get-account db uid)
+          stripe-id (or (:stripe-id user)
+                        (p/add-stripe-id-to-user! db user))]
       (try
-        (rr/response (p/create-session session-info))
+        (let [session (p/create-session (assoc session-info
+                                          :stripe-id stripe-id
+                                          :uid uid))]
+
+          (rr/response session))
         (catch Exception e
           (let [error (ex-data e)]
-            (if-let [status (:status error)]
-              {:status status
-               :body   (:body error)}
-              {:status 500
-               :body   {:message "Something went wrong. Please try again"}})))))))
+            (handle-stripe-error error)))))))
 
 
 (defn create-subscription
@@ -36,47 +49,42 @@
   [db]
   (fn [req]
     (let [uid (-> req :claims :sub)
-          subscription (-> req :parameters :body)
+          subscription-info (-> req :parameters :body)
           user (user-db/get-account db uid)]
       (when-not (:stripe-id user)
         {:status 401
          :body   {:message "Unauthorized! User does not have a valid stripe-id"}})
       (try
-        ; TODO See if this is needed
-        (catch Exception e
+        (let [subscription (p/create-subscription subscription-info)])
+
+        (catch ExceptionInfo e
           (let [error (ex-data e)]
-            (if-let [status (:status error)]
-              {:status status
-               :body   (:body error)}
-              {:status 500
-               :body   {:message "Something went wrong. Please try again"}})))))))
+            (handle-stripe-error error)))))))
 
 
 
 (defn handle-stripe-webhook
-  "Useful for subscription readiness"
+  "Handler for stripe events. Currently handling subscription deletion / cancellation"
   [db]
   (fn [req]
+    ; TODO Verify stripe signature
     (let [body (:body-params req)]
       (println (:type body))
       (case (:type body)
+        "customer.subscription.deleted"
+        (do
+          (let [stripe-id (get-in body [:data :object :customer])]
+            (user-db/update-account! db {:stripe-id stripe-id} {:subscription-status :trialing})
+            (rr/response {:message "Status returned to :trialing"})))
 
-        "customer.subscription.created"
-        (let [customer (get-in body [:data :object :customer])]
-          (println (str "Subscription created" " by " "customer" customer))
-          (rr/response {:message (str "Success" customer)}))
+        "customer.subscription.updated"
+        (do
+          (let [stripe-id (get-in body [:data :object :customer])
+                new-sub-status (get-in body [:data :object :status])]
+            (user-db/update-account! db {:stripe-id stripe-id} {:subscription-status new-sub-status})
+            (rr/response {:message (str "Status updated to " new-sub-status)})))
 
-        "invoice.payment_succeeded"
-        (let [customer (get-in body [:data :object :customer])]
-          (println (str "Subscription created" " by " "customer" customer))
-          (rr/response {:message (str "Success" customer)}))
         (rr/response {:message "Default in the end"})))))
-
-
-
-
-;(case (:type event)
-;  "customer.subscription.created"))))
 
 
 
@@ -86,15 +94,24 @@
 
   (def mock-req
     (assoc (mock/request :post "/v1/payment/checkout")
-      :claims {:uid "google-oauth2|117984597083645660112"}
+      :claims {:sub "facebook|5841010855939759"}
       :parameters {:body {:success-url "https://designvote.io"
                           :cancel-url  "https://designvote.io"
                           :price-id    "price_1JCNcwIGGMueBEvzdPAkKP47"}}))
 
+
   (def db (-> state/system :db/postgres))
 
   (def handler (create-checkout-session db))
+
+
   (handler mock-req))
+
+
+
+
+
+
 
 
 

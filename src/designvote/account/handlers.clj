@@ -5,7 +5,7 @@
             [designvote.auth0 :as auth0]
             [designvote.payment.core :as pay]
             [muuntaja.core :as m]
-            [designvote.utils.entity :as e]
+            [designvote.util :as u]
             [designvote.responses :as responses]))
 
 
@@ -69,6 +69,6 @@
          :body   {:message "Please log in and try again"}})
       (let [account (account-db/get-account db uid)]
         (if account
-          (rr/response {:account (e/->camelCase account)})
+          (rr/response {:account (u/->camelCase account)})
           (rr/not-found {:message "Account not found"}))))))
 

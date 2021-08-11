@@ -12,12 +12,13 @@
 (defn get-account
   [db uid]
   (let [[user] (sql/find-by-keys db :account {:uid uid})]
-    (dissoc user :password)))
+    (-> user
+        (dissoc :password)
+        (assoc :subscription-status (keyword (:subscription-status user))))))
 
 (defn update-account!
   "Update values from an account entry
   Example:
-  (update-user! \"123-123-123\" {:password \"new-password\"}"
-  [db uid values]
-  (let [where-map {:uid uid}]
-    (sql/update! db :account values where-map)))
+  (update-user! {:uid \"123-123-123\"} {:password \"new-password\"}"
+  [db where-map values]
+  (sql/update! db :account values where-map))

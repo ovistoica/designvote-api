@@ -5,10 +5,13 @@
             [clj-http.client :as http]
             [designvote.account.db :as user-db]
             [designvote.util :as u]
-            [clojure.tools.logging :as log]))
+            [clojure.tools.logging :as log])
+  (:import (clojure.lang ExceptionInfo)))
 
-(def ^:private ^String token "sk_test_puvyfUhqHSvb0FuWD1w2tE4A00I0zYcd4")
+(def ^:private ^String token "sk_test_puvyfUhqHSvb0FuWD1w2tE4A00I0zYcd4j")
 (def ^:private ^String stripe-api-base-url "https://api.stripe.com/v1")
+
+(def subscription-status #{:trialing :active :past_due :canceled :unpaid})
 
 
 (defn- handle-error [body]
@@ -40,12 +43,12 @@
       (let [url (str stripe-api-base-url "/" (name endpoint))
             _ (log/trace "Slack API request: %s %s" (pr-str url) (pr-str config))
             request (merge-with merge
-                                {:headers        {"Authorization" (str "Bearer " token)}
+                                {:headers          {"Authorization" (str "Bearer " token)}
                                  :throw-exceptions false
                                  ;; use a relatively long connection timeout (10 seconds) in cases where we're fetching big
                                  ;; amounts of data -- see #11735
-                                 :conn-timeout   10000
-                                 :socket-timeout 10000}
+                                 :conn-timeout     10000
+                                 :socket-timeout   10000}
                                 config)]
         (try
           (handle-response (request-fn url request))
@@ -66,12 +69,11 @@
 
 
 (defn create-subscription
-  [customer-id price-id]
+  [{:keys [customer-id price-id]}]
   (POST :subscriptions {:customer         customer-id
                         :payment_behavior "default_incomplete"
                         "expand[]"        "latest_invoice.payment_intent"
                         "items[0][price]" price-id}))
-
 
 (defn retrieve-subscription
   [customer-id]
@@ -83,13 +85,16 @@
   [{:keys [email name uid]}]
   (POST :customers {:name           name
                     :email          email
+                    :description    "(created by Designvote API)"
                     "metadata[uid]" uid}))
 
 (defn create-session
   "Create a payment session"
-  [{:keys [success-url cancel-url price-id]}]
+  [{:keys [success-url cancel-url price-id uid stripe-id]}]
   (POST "checkout/sessions" {:success_url              success-url
                              :cancel_url               cancel-url
+                             :client_reference_id      uid
+                             :customer                 stripe-id
                              "payment_method_types[0]" "card"
                              "line_items[0][price]"    price-id
                              "line_items[0][quantity]" 1
@@ -106,11 +111,20 @@
 
 (defn add-stripe-id-to-user!
   [db {:keys [uid name email]}]
-  (let [stripe-id (:stripe-id (create-costumer {:email email
-                                                :name  name}))]
-    (user-db/update-account! db uid {:stripe-id stripe-id})))
+  (let [stripe-id (:id (create-costumer {:email email
+                                         :name  name
+                                         :uid   uid}))
+        updated? (-> (user-db/update-account! db {:uid uid} {:stripe-id stripe-id})
+                     :next.jdbc/update-count
+                     (pos?))]
+    stripe-id))
 
 (comment
+  (create-costumer {:email "testulescu@giggel.com"
+                    :name  "Caine"
+                    :uid   "test"})
+
+
   (active-subscription? "cus_JyuOl6l7ib5JGO")
   (active-subscription? "cus_JyuLOm2pqM8ypO")
 
@@ -120,7 +134,8 @@
                    :cancel-url  "https://designvote.io"
                    :price-id    "price_1JCNcwIGGMueBEvzdPAkKP47"})
 
-  (create-subscription "cus_Jq82xfYlHv7mGG" "price_1JCNcwIGGMueBEvzdPAkKP47"))
+
+  (try (create-subscription "cus_Jq82xfYlHv7mGG" "price_1JCNcwIGGMueBEvzdPAkKP47") (catch ExceptionInfo e (ex-data e))))
 
 
 
