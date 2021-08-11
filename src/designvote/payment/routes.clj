@@ -13,12 +13,6 @@
                                   :cancel-url  string?
                                   :price-id    string?}}
               :handler    (h/create-checkout-session db)}}]
-     ["/subscription"
-      {:post {:summary    "API called after successful subscription"
-              :responses  {201 {}}
-              :parameters {:body {:customer-id       string?
-                                  :price-id string?}}
-              :handler    (h/create-subscription db)}}]
      ["/webhook"
       {:post {:summary "Webhook for stripe asynchronous events"
               :handler (h/handle-stripe-webhook db)}}]]))

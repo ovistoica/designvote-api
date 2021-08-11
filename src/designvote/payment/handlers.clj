@@ -37,30 +37,10 @@
         (let [session (p/create-session (assoc session-info
                                           :stripe-id stripe-id
                                           :uid uid))]
-
-          (rr/response session))
-        (catch Exception e
-          (let [error (ex-data e)]
-            (handle-stripe-error error)))))))
-
-
-(defn create-subscription
-  "Handler to add the subscription-id to the user account"
-  [db]
-  (fn [req]
-    (let [uid (-> req :claims :sub)
-          subscription-info (-> req :parameters :body)
-          user (user-db/get-account db uid)]
-      (when-not (:stripe-id user)
-        {:status 401
-         :body   {:message "Unauthorized! User does not have a valid stripe-id"}})
-      (try
-        (let [subscription (p/create-subscription subscription-info)])
-
+             (rr/created (:url session) session))
         (catch ExceptionInfo e
           (let [error (ex-data e)]
             (handle-stripe-error error)))))))
-
 
 
 (defn handle-stripe-webhook
@@ -87,10 +67,7 @@
         (rr/response {:message "Default in the end"})))))
 
 
-
-
 (comment
-
 
   (def mock-req
     (assoc (mock/request :post "/v1/payment/checkout")
@@ -106,24 +83,3 @@
 
 
   (handler mock-req))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
