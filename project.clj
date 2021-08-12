@@ -19,7 +19,6 @@
                  [buddy/buddy-core "1.9.0"]
                  [ragtime "0.8.1"]
                  [cprop "0.1.18"]
-                 [abengoa/clj-stripe "1.0.4"]
                  [com.stripe/stripe-java "20.68.0"]]
 
 
