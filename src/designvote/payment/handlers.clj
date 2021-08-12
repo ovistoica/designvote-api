@@ -4,9 +4,14 @@
             [ring.mock.request :as mock]
             [integrant.repl.state :as state]
             [clojure.pprint :as pp]
-            [ring.util.response :as rr])
-  (:import (clojure.lang ExceptionInfo)))
+            [ring.util.response :as rr]
+            [cheshire.core :as json])
+  (:import (clojure.lang ExceptionInfo)
+           (com.stripe.exception SignatureVerificationException)
+           (com.stripe.net Webhook)
+           (com.google.gson JsonSyntaxException)))
 
+(def ^:private ^String signing-secret "whsec_SBIA8F5covasnH4x8TF0w74UnHmODPTy")
 
 (defn handle-stripe-error
   [error]
@@ -37,7 +42,7 @@
         (let [session (p/create-session (assoc session-info
                                           :stripe-id stripe-id
                                           :uid uid))]
-             (rr/created (:url session) session))
+          (rr/created (:url session) session))
         (catch ExceptionInfo e
           (let [error (ex-data e)]
             (handle-stripe-error error)))))))
@@ -47,18 +52,32 @@
   "Handler for stripe events. Currently handling subscription deletion / cancellation"
   [db]
   (fn [req]
-    ; TODO Verify stripe signature
-    (let [body (:body-params req)]
-      (println (:type body))
+    (let [body (:body-params req)
+          payload (json/generate-string body)
+          sig-header (get (:headers req) "stripe-signature")]
+
+      ; Verify signature from stripe
+      (try
+        (Webhook/constructEvent payload sig-header signing-secret)
+        (catch SignatureVerificationException e
+          {:status 400
+           :body   {:message "Invalid request"}})
+        (catch JsonSyntaxException e
+          {:status 400
+           :body {:message "Invalid body sent"}}))
+
+      ; Handle different event types
       (case (:type body)
         "customer.subscription.deleted"
         (do
+          ; Cancel user subscription
           (let [stripe-id (get-in body [:data :object :customer])]
             (user-db/update-account! db {:stripe-id stripe-id} {:subscription-status :trialing})
             (rr/response {:message "Status returned to :trialing"})))
 
         "customer.subscription.updated"
         (do
+          ; Update the subscription status accordingly
           (let [stripe-id (get-in body [:data :object :customer])
                 new-sub-status (get-in body [:data :object :status])]
             (user-db/update-account! db {:stripe-id stripe-id} {:subscription-status new-sub-status})

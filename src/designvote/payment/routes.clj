@@ -7,8 +7,8 @@
   (let [db (:jdbc-url env)]
     ["/payment" {:swagger {:tags ["payment"]}}
      ["/checkout"
-      {:post {:summary    "Create a checkout session"
-              ;:responses  {201 {:body {:message string?}}}
+      {:post {:summary    "Create a checkout session for the user"
+              :responses  {201 {:body map?}}
               :parameters {:body {:success-url string?
                                   :cancel-url  string?
                                   :price-id    string?}}

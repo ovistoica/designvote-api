@@ -1,15 +1,19 @@
 (ns designvote.payment.core
-  (:require [clj-stripe.common :as c]
-            [clj-stripe.customers :as cus]
-            [muuntaja.core :as m]
+  (:require [muuntaja.core :as m]
             [clj-http.client :as http]
             [designvote.account.db :as user-db]
             [designvote.util :as u]
-            [clojure.tools.logging :as log])
-  (:import (clojure.lang ExceptionInfo)))
+            [clojure.string :as string]
+            [clojure.tools.logging :as log]
+            [buddy.core.mac :as mac]
+            [cheshire.core :as json]
+            [buddy.core.codecs :as codecs])
+  (:import (clojure.lang ExceptionInfo)
+           (com.stripe.net Webhook)))
 
 (def ^:private ^String token "sk_test_puvyfUhqHSvb0FuWD1w2tE4A00I0zYcd4j")
 (def ^:private ^String stripe-api-base-url "https://api.stripe.com/v1")
+(def ^:private ^String signing-secret "whsec_SBIA8F5covasnH4x8TF0w74UnHmODPTy")
 
 (def subscription-status #{:trialing :active :past_due :canceled :unpaid})
 
@@ -118,33 +122,3 @@
                      :next.jdbc/update-count
                      (pos?))]
     stripe-id))
-
-(comment
-  (create-costumer {:email "testulescu@giggel.com"
-                    :name  "Caine"
-                    :uid   "test"})
-
-
-  (active-subscription? "cus_JyuOl6l7ib5JGO")
-  (active-subscription? "cus_JyuLOm2pqM8ypO")
-
-  (retrieve-subscription "cus_JyuLOm2pqM8ypO")
-
-  (create-session {:success-url "https://designvote.io"
-                   :cancel-url  "https://designvote.io"
-                   :price-id    "price_1JCNcwIGGMueBEvzdPAkKP47"})
-
-
-  (try (create-subscription "cus_Jq82xfYlHv7mGG" "price_1JCNcwIGGMueBEvzdPAkKP47") (catch ExceptionInfo e (ex-data e))))
-
-
-
-
-
-
-
-
-
-
-
-
