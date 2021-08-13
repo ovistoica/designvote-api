@@ -29,6 +29,10 @@
   "Transforms a map to camelCase. Useful for responses for JS frontends"
   (cske/transform-keys csk/->camelCase m))
 
+(defn ->kebab-case [m]
+  "Transforms a map to snake-case. Useful for responses from JS frontends"
+  (cske/transform-keys csk/->kebab-case m))
+
 (defn keyword->sql-text
   "Transform a keyword to be stored in DB"
   [^Keyword kw]

@@ -8,7 +8,8 @@
         auth0 (:auth0 env)]
     ["/account" {:swagger {:tags ["account"]}}
      [""
-      {:get    {:handler   (account/get-account db)
+      {:get    {:middleware [mw/wrap-auth0]
+                :handler   (account/get-account db)
                 :responses {200 {:body map?}}
                 :summary "Retrieve current logged in user"}
        :post   {:handler    (account/create-account! db)

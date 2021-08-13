@@ -1,9 +1,10 @@
 (ns designvote.payment.handlers
   (:require [designvote.payment.core :as p]
             [designvote.account.db :as user-db]
+            [designvote.util :as u]
+            [designvote.config :refer [config]]
             [ring.mock.request :as mock]
             [integrant.repl.state :as state]
-            [clojure.pprint :as pp]
             [ring.util.response :as rr]
             [cheshire.core :as json])
   (:import (clojure.lang ExceptionInfo)
@@ -11,7 +12,6 @@
            (com.stripe.net Webhook)
            (com.google.gson JsonSyntaxException)))
 
-(def ^:private ^String signing-secret "whsec_SBIA8F5covasnH4x8TF0w74UnHmODPTy")
 
 (defn handle-stripe-error
   [error]
@@ -33,13 +33,17 @@
   session is created."
   [db]
   (fn [req]
-    (let [uid (-> req :claims :sub)
-          session-info (-> req :parameters :body)
+    (let [
+          uid (-> req :claims :sub)
+          session-info (-> req :parameters :body (u/->kebab-case))
+          price-id (if (= "monthly" (:duration session-info)) p/monthly-plan p/yearly-plan)
           user (user-db/get-account db uid)
           stripe-id (or (:stripe-id user)
                         (p/add-stripe-id-to-user! db user))]
+
       (try
         (let [session (p/create-session (assoc session-info
+                                          :price-id price-id
                                           :stripe-id stripe-id
                                           :uid uid))]
           (rr/created (:url session) session))
@@ -58,13 +62,13 @@
 
       ; Verify signature from stripe
       (try
-        (Webhook/constructEvent payload sig-header signing-secret)
+        (Webhook/constructEvent payload sig-header p/signing-secret)
         (catch SignatureVerificationException e
           {:status 400
            :body   {:message "Invalid request"}})
         (catch JsonSyntaxException e
           {:status 400
-           :body {:message "Invalid body sent"}}))
+           :body   {:message "Invalid body sent"}}))
 
       ; Handle different event types
       (case (:type body)

@@ -9,11 +9,12 @@
      ["/checkout"
       {:post {:summary    "Create a checkout session for the user"
               :responses  {201 {:body map?}}
-              :parameters {:body {:success-url string?
-                                  :cancel-url  string?
-                                  :price-id    string?}}
+              :parameters {:body {:success_url string?
+                                  :cancel_url  string?
+                                  :duration    string?}}
               :handler    (h/create-checkout-session db)}}]
      ["/webhook"
       {:post {:summary "Webhook for stripe asynchronous events"
               :handler (h/handle-stripe-webhook db)}}]]))
+
 

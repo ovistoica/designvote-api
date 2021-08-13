@@ -3,6 +3,7 @@
             [ring.adapter.jetty :as jetty]
             [integrant.core :as ig]
             [environ.core :refer [env]]
+            [environ.core]
             [designvote.router :as router]
             [next.jdbc :as jdbc]
             [next.jdbc.connection :as njc]

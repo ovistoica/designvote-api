@@ -3,17 +3,15 @@
             [clj-http.client :as http]
             [designvote.account.db :as user-db]
             [designvote.util :as u]
-            [clojure.string :as string]
-            [clojure.tools.logging :as log]
-            [buddy.core.mac :as mac]
-            [cheshire.core :as json]
-            [buddy.core.codecs :as codecs])
-  (:import (clojure.lang ExceptionInfo)
-           (com.stripe.net Webhook)))
+            [designvote.config :refer [config]]
+            [clojure.tools.logging :as log]))
 
-(def ^:private ^String token "sk_test_puvyfUhqHSvb0FuWD1w2tE4A00I0zYcd4j")
+(def ^:private ^String token (:stripe-secret config))
 (def ^:private ^String stripe-api-base-url "https://api.stripe.com/v1")
-(def ^:private ^String signing-secret "whsec_SBIA8F5covasnH4x8TF0w74UnHmODPTy")
+
+(def  ^String monthly-plan (:monthly-plan config))
+(def  ^String yearly-plan (:yearly-plan config))
+(def  ^String signing-secret (:signing-secret config))
 
 (def subscription-status #{:trialing :active :past_due :canceled :unpaid})
 
