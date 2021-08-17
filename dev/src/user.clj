@@ -67,3 +67,21 @@
 
   (ddb/count-user-designs db "google-oauth2|117984597083645660112")
   (ddb/find-all-user-designs! db "google-oauth2|117984597083645660112"))
+
+; comment copied from handlers
+(comment
+
+  (def mock-req
+    (assoc (mock/request :post "/v1/payment/checkout")
+      :claims {:sub "facebook|5841010855939759"}
+      :parameters {:body {:success-url "https://designvote.io"
+                          :cancel-url  "https://designvote.io"
+                          :price-id    "price_1JCNcwIGGMueBEvzdPAkKP47"}}))
+
+
+  (def db (-> state/system :db/postgres))
+
+  (def handler (create-checkout-session db))
+
+
+  (handler mock-req))

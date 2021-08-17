@@ -3,8 +3,6 @@
             [designvote.account.db :as user-db]
             [designvote.util :as u]
             [designvote.config :refer [config]]
-            [ring.mock.request :as mock]
-            [integrant.repl.state :as state]
             [ring.util.response :as rr]
             [cheshire.core :as json])
   (:import (clojure.lang ExceptionInfo)
@@ -88,21 +86,3 @@
             (rr/response {:message (str "Status updated to " new-sub-status)})))
 
         (rr/response {:message "Default in the end"})))))
-
-
-(comment
-
-  (def mock-req
-    (assoc (mock/request :post "/v1/payment/checkout")
-      :claims {:sub "facebook|5841010855939759"}
-      :parameters {:body {:success-url "https://designvote.io"
-                          :cancel-url  "https://designvote.io"
-                          :price-id    "price_1JCNcwIGGMueBEvzdPAkKP47"}}))
-
-
-  (def db (-> state/system :db/postgres))
-
-  (def handler (create-checkout-session db))
-
-
-  (handler mock-req))
