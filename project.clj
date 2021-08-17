@@ -1,4 +1,4 @@
-(defproject designvote-api "0.1.0-SNAPSHOT"
+(defproject designvote-api "1.0.0"
   :description "Designvote rest API"
   :url "https://api.designvote.io"
   :min-lein-version "2.0.0"
