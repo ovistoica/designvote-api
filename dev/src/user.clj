@@ -32,24 +32,6 @@
    :migrations (rjdbc/load-resources "migrations")
    :reporter   println})
 
-(def vote-query
-  {:version-id "82d35d4e-4474-4a89-bdc1-0649e368ee6f"
-   :uid        "anonymous|6d18ccf5-1f54-413b-8d67-9f68a31da5a4"})
-
-
-(def test-ratings {"82d35d4e-4474-4a89-bdc1-0649e368ee6f" 12
-                   "82d35d4e-4474-4a89-bdc1-0649e368ee6a" 14})
-
-
-;[{:rating     rating
-;  :design-id  design-id
-;  :version-id version-id
-;  :voter-name voter-name}]
-
-(defn insert-feedback!
-  [{:keys [design-id ratings comments voter-name]}]
-  (let []))
-
 
 
 
@@ -62,7 +44,6 @@
                            :name "test"
                            :uid "awdawd"})
 
-
   (def handler (h/get-account db))
   (def check-h (ph/create-checkout-session db))
 
@@ -70,9 +51,10 @@
   (handler {})
 
   (adb/get-account db "google-oauth2|117984597083645660112")
+  (p/add-stripe-id-to-user! db (adb/get-account db "facebook|5841010855939759"))
   (adb/get-account db "facebook|5841010855939759")
 
-  (adb/update-account! db {:uid "facebook|5841010855939759"} {:stripe-id nil})
+  (adb/update-account! db {:uid "facebook|5841010855939759"} {:subscription-status :trialing})
   (def handler (h/create-account! db))
 
 

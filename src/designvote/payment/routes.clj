@@ -1,13 +1,15 @@
 (ns designvote.payment.routes
   (:require [designvote.payment.handlers :as h]
-            [clojure.spec.alpha :as s]))
+            [clojure.spec.alpha :as s]
+            [designvote.middleware :as mw]))
 
 (defn routes
   [env]
   (let [db (:jdbc-url env)]
     ["/payment" {:swagger {:tags ["payment"]}}
      ["/checkout"
-      {:post {:summary    "Create a checkout session for the user"
+      {:post {:middleware [mw/wrap-auth0]
+              :summary    "Create a checkout session for the user"
               :responses  {201 {:body map?}}
               :parameters {:body {:success_url string?
                                   :cancel_url  string?
