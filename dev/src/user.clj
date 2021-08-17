@@ -19,7 +19,8 @@
   (fn [] (-> "dev/resources/config.edn" slurp ig/read-string)))
 
 (def go ig-repl/go)
-(def halt ig-repl/halt) (def restart ig-repl/reset)
+(def halt ig-repl/halt)
+(def restart ig-repl/reset)
 (def reset-all ig-repl/reset-all)
 
 (def app (-> state/system :designvote/app))
@@ -41,8 +42,8 @@
 
 
   (adb/create-account! db {:email "test@awdawd.com"
-                           :name "test"
-                           :uid "awdawd"})
+                           :name  "test"
+                           :uid   "awdawd"})
 
   (def handler (h/get-account db))
   (def check-h (ph/create-checkout-session db))
