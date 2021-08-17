@@ -1,4 +1,4 @@
-(defproject designvote-api "0.1.0-SNAPSHOT"
+(defproject designvote-api "1.0.0"
   :description "Designvote rest API"
   :url "https://api.designvote.io"
   :min-lein-version "2.0.0"
@@ -8,6 +8,7 @@
                  [environ "1.2.0"]
                  [metosin/reitit "0.5.2"]
                  [seancorfield/next.jdbc "1.1.613"]
+                 [com.github.seancorfield/honeysql "2.0.0-rc5"]
                  [org.postgresql/postgresql "42.2.14"]
                  [camel-snake-kebab "0.4.2"]
                  [clj-http "3.10.0"]
@@ -18,7 +19,8 @@
                  [buddy/buddy-core "1.9.0"]
                  [ragtime "0.8.1"]
                  [cprop "0.1.18"]
-                 [abengoa/clj-stripe "1.0.4"]]
+                 [com.stripe/stripe-java "20.68.0"]]
+
 
   :profiles {:uberjar {:aot      :all
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}

@@ -5,6 +5,7 @@
             [designvote.auth0 :as auth0]
             [designvote.payment.core :as pay]
             [muuntaja.core :as m]
+            [designvote.util :as u]
             [designvote.responses :as responses]))
 
 
@@ -57,4 +58,17 @@
       (when (= (:status deleted-auth0-account!) 204)
         (account-db/delete-account! db {:uid uid})
         (rr/status 204)))))
+
+
+(defn get-account [db]
+  "Retrieve logged in account"
+  (fn [req]
+    (let [uid (get-in req [:claims :sub])]
+      (when-not uid
+        {:status 401
+         :body   {:message "Please log in and try again"}})
+      (let [account (account-db/get-account db uid)]
+        (if account
+          (rr/response {:account (u/->camelCase account)})
+          (rr/not-found {:message "Account not found"}))))))
 

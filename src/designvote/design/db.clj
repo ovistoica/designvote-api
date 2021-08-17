@@ -1,6 +1,9 @@
 (ns designvote.design.db
+  (:refer-clojure :exclude [filter group-by partition-by set update])
   (:require [next.jdbc.sql :as sql]
-            [next.jdbc :as jdbc])
+            [next.jdbc :as jdbc]
+            [honey.sql.helpers :refer [select where from]]
+            [honey.sql :as h])
   (:import java.util.UUID))
 
 
@@ -52,10 +55,19 @@
 
 (defn delete-design!
   [db design]
-  ;TODO DELETE DESIGN VERSIONS VOTES AND OPINIONS
   (-> (sql/delete! db :design design)
       :next.jdbc/update-count
       (pos?)))
+
+(defn count-user-designs
+  "Get number of designs created by the user.
+  Useful for trial periods of users"
+  [db uid]
+  (jdbc/execute-one! db (-> (select :%count.*)
+                            (from :design)
+                            (where [:= :uid uid])
+                            (h/format))))
+
 
 (defn construct-db-pictures
   "Extracts pictures uri from the design-version object
@@ -115,7 +127,6 @@
       :next.jdbc/update-count
       (pos?)))
 
-(def not-nil? (complement nil?))
 
 
 (defn choose-vote-design-version!
@@ -127,14 +138,14 @@
         db-opts (:options db)
         new-vote (select-keys data [:version-id :uid :vote-id :design-id])]
     (jdbc/with-transaction [tx db]
-                           (if-let [existent-vote (not-empty (sql/find-by-keys tx :vote vote-query db-opts))]
-                             (sql/update! tx :vote {:version-id version-id} vote-query db-opts)
-                             (do
-                               (sql/insert! tx :vote new-vote db-opts)
-                               (jdbc/execute-one! tx ["UPDATE design
+      (if-let [existent-vote (not-empty (sql/find-by-keys tx :vote vote-query db-opts))]
+        (sql/update! tx :vote {:version-id version-id} vote-query db-opts)
+        (do
+          (sql/insert! tx :vote new-vote db-opts)
+          (jdbc/execute-one! tx ["UPDATE design
                             SET total_votes = total_votes + 1
                             WHERE design_id = ?" design-id])
-                               (jdbc/execute-one! tx ["UPDATE design_version
+          (jdbc/execute-one! tx ["UPDATE design_version
                             SET votes = votes + 1
                             WHERE version_id = ?" version-id]))))))
 
@@ -147,26 +158,26 @@
         db-opts (:options db)
         new-vote (select-keys data [:version-id :uid :rating :vote-id])]
     (jdbc/with-transaction [tx db]
-                           (if-let [existent-vote (-> (sql/find-by-keys tx :vote vote-keys db-opts)
-                                                      not-empty)]
-                             (sql/update! tx :vote {:rating rating} vote-keys db-opts)
-                             (do
-                               (sql/insert! tx :vote new-vote db-opts)
-                               (jdbc/execute-one! tx ["UPDATE design
+      (if-let [existent-vote (-> (sql/find-by-keys tx :vote vote-keys db-opts)
+                                 not-empty)]
+        (sql/update! tx :vote {:rating rating} vote-keys db-opts)
+        (do
+          (sql/insert! tx :vote new-vote db-opts)
+          (jdbc/execute-one! tx ["UPDATE design
                             SET total_votes = total_votes + 1
                             WHERE design_id = ?" design-id])
-                               (jdbc/execute-one! tx ["UPDATE design_version
+          (jdbc/execute-one! tx ["UPDATE design_version
                             SET votes = votes + 1
                             WHERE version_id = ?" version-id]))))))
 
 (defn unvote-design-version!
   [db {:keys [version-id design-id vote-id]}]
   (jdbc/with-transaction [tx db]
-                         (sql/delete! tx :vote {:vote-id vote-id} (:options db))
-                         (jdbc/execute-one! tx ["UPDATE design
+    (sql/delete! tx :vote {:vote-id vote-id} (:options db))
+    (jdbc/execute-one! tx ["UPDATE design
                             SET total_votes = total_votes - 1
                             WHERE design_id = ?" design-id])
-                         (jdbc/execute-one! tx ["UPDATE design_version
+    (jdbc/execute-one! tx ["UPDATE design_version
                             SET votes = votes - 1
                             WHERE version_id = ?" version-id])))
 
