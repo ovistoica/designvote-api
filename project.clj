@@ -11,6 +11,7 @@
                  [com.github.seancorfield/honeysql "2.0.0-rc5"]
                  [org.postgresql/postgresql "42.2.14"]
                  [camel-snake-kebab "0.4.2"]
+                 [clojure.java-time "0.3.0"]
                  [clj-http "3.10.0"]
                  [ovotech/ring-jwt "1.2.5"]
                  [camel-snake-kebab "0.4.2"]

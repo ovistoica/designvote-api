@@ -12,6 +12,10 @@
   (let [designs (sql/find-by-keys db :design {:uid uid})]
     designs))
 
+(defn get-public-designs!
+  [db])
+
+
 (defn insert-design!
   [db design]
   (sql/insert! db :design design))

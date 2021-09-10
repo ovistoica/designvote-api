@@ -12,7 +12,7 @@
     (com.zaxxer.hikari HikariDataSource)
     (org.eclipse.jetty.server Server)
     (clojure.lang Keyword)
-    (java.sql PreparedStatement)
+    (java.sql PreparedStatement Timestamp Date Time)
     (org.postgresql.util PGobject)))
 
 (defn app
@@ -62,6 +62,24 @@
   Keyword
   (set-parameter [m ^PreparedStatement s i]
     (.setObject s i (write-pg-keyword m))))
+
+(extend-protocol next.jdbc.result-set/ReadableColumn
+  ;
+  Timestamp
+  (read-column-by-label [^Timestamp v _]
+    (u/sql-timestamp->inst v))
+  (read-column-by-index [^Timestamp v _2 _3]
+    (u/sql-timestamp->inst v))
+  Date
+  (read-column-by-label [^Date v _]
+    (.toLocalDate v))
+  (read-column-by-index [^Date v _2 _3]
+    (.toLocalDate v))
+  Time
+  (read-column-by-label [^Time v _]
+    (.toLocalTime v))
+  (read-column-by-index [^Time v _2 _3]
+    (.toLocalTime v)))
 
 (defmethod ig/init-key :auth/auth0
   [_ auth0]

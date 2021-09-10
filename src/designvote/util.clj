@@ -1,10 +1,12 @@
 (ns designvote.util
   (:require [clojure.pprint :refer [pprint]]
             [camel-snake-kebab.core :as csk]
-            [camel-snake-kebab.extras :as cske])
+            [camel-snake-kebab.extras :as cske]
+            [java-time :refer [java-date]])
   (:import (java.io StringWriter)
            (java.util UUID)
-           (clojure.lang Keyword)))
+           (clojure.lang Keyword)
+           (java.time ZoneId)))
 
 
 (defn pprint-to-str
@@ -39,3 +41,9 @@
   (-> kw
       (csk/->snake_case)
       (name)))
+
+(defn sql-timestamp->inst [t]
+  (-> t
+      (.toLocalDateTime)
+      (.atZone (ZoneId/systemDefault))
+      (java-date)))

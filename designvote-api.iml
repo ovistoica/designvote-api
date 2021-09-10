@@ -11,7 +11,6 @@
       <sourceFolder url="file://$MODULE_DIR$/resources" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
-      <excludeFolder url="file://$MODULE_DIR$/target/default" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
@@ -26,6 +25,7 @@
     <orderEntry type="library" name="Leiningen: clj-time:0.10.0" level="project" />
     <orderEntry type="library" name="Leiningen: clj-tuple:0.2.2" level="project" />
     <orderEntry type="library" name="Leiningen: clojure-complete:0.2.5" level="project" />
+    <orderEntry type="library" name="Leiningen: clojure.java-time:0.3.0" level="project" />
     <orderEntry type="library" name="Leiningen: com.andrewmcveigh/cljs-time:0.5.1" level="project" />
     <orderEntry type="library" name="Leiningen: com.auth0/java-jwt:3.8.2" level="project" />
     <orderEntry type="library" name="Leiningen: com.auth0/jwks-rsa:0.8.3" level="project" />
