@@ -2,6 +2,7 @@
   (:require [designvote.middleware :as mw]
             [designvote.design.handlers :as design]
             [designvote.responses :as responses]
+            [spec-tools.data-spec :as ds]
             [clojure.spec.alpha :as s]))
 
 (defn routes
@@ -10,7 +11,7 @@
     ["/designs" {:swagger {:tags ["designs"]}}
      [""
       {:middleware [[mw/wrap-auth0]]
-       :get        {:handler   (design/list-all-designs! db)
+       :get        {:handler   (design/list-all-user-designs db)
                     :responses {200 {:body responses/designs}}
                     :summary   "Get all designs"}
        :post       {:handler    (design/create-design! db)
@@ -22,7 +23,12 @@
                                         :design-type string?
                                         :vote-style  string?}}
                     :summary    "Create a design"}}]
-
+     ["/latest"
+      {:get {:handler    (design/get-latest-designs-paginated db)
+             :parameters {:query {(ds/opt :offset) int?
+                                  (ds/opt :limit)  int?}}
+             :responses  {200 {:body {:designs coll?}}}
+             :summary    "Retrieve latest designs paginated. Useful for feed"}}]
      ["/vote/short"
       ["/:short-url"
        {:get {:handler    (design/find-design-by-url db)
@@ -33,7 +39,7 @@
      ["/:design-id"
       [""
        {:middleware [[mw/wrap-auth0]]
-        :get        {:handler    (design/retrieve-design! db)
+        :get        {:handler    (design/retrieve-design-by-id db)
                      :responses  {200 {:body responses/design}}
                      :parameters {:path {:design-id string?}}
                      :summary    "Retrieve design"}
@@ -95,9 +101,9 @@
        {:post {:summary    "Give feedback on a design (ratings and comments)"
                :handler    (design/give-feedback! db)
                :parameters {:path {:design-id string?}
-                            :body {:voter-name     (s/nilable string?)
-                                   :ratings  vector?
-                                   :comments vector?}}}}]
+                            :body {:voter-name (s/nilable string?)
+                                   :ratings    vector?
+                                   :comments   vector?}}}}]
       ["/votes"
        {:post   {:handler    (design/vote-design! db)
                  :parameters {:path {:design-id string?}

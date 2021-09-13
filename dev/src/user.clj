@@ -65,6 +65,9 @@
 
   (p/add-stripe-id-to-user! db (adb/get-account db "google-oauth2|117984597083645660112"))
 
+  (ddb/get-latest-public-designs-paginated db )
+  (count (sql/find-by-keys db :design {:public true}))
+
   (ddb/count-user-designs db "google-oauth2|117984597083645660112")
   (ddb/find-all-user-designs! db "google-oauth2|117984597083645660112"))
 

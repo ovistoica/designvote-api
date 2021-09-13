@@ -20,7 +20,14 @@
                  [buddy/buddy-core "1.9.0"]
                  [ragtime "0.8.1"]
                  [cprop "0.1.18"]
-                 [com.stripe/stripe-java "20.68.0"]]
+                 [com.stripe/stripe-java "20.68.0"]
+                 ;; Import only S3 required jars
+                 [amazonica "0.3.156" :exclusions [com.amazonaws/aws-java-sdk
+                                                   com.amazonaws/amazon-kinesis-client
+                                                   com.amazonaws/dynamodb-streams-kinesis-adapter]]
+                 [com.amazonaws/aws-java-sdk-core "1.11.968"]
+                 [com.amazonaws/aws-java-sdk-s3 "1.11.968"]]
+
 
 
   :profiles {:uberjar {:aot      :all

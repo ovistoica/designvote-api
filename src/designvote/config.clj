@@ -3,6 +3,15 @@
             [clojure.java.io :as io]
             [clojure.string :as str]))
 
+(def relevant-keys #{"STRIPE_SECRET"
+                     "STRIPE_SIGNING_SECRET"
+                     "YEARLY_PLAN"
+                     "MONTHLY_PLAN"
+                     "AWS_ACCESS_KEY"
+                     "AWS_SECRET_KEY"
+                     "AWS_ENDPOINT"
+                     "AWS_S3_BUCKET_NAME"})
+
 (defn- keywordize [s]
   (-> (str/lower-case s)
       (str/replace "_" "-")
@@ -30,6 +39,13 @@
     (into {} (for [[k v] (edn/read-string content)]
                [(sanitize-key k) (sanitize-val k v)]))))
 
+(defn- read-system-env []
+  (when-let [content (System/getenv)]
+    (into {} (for [[k v] content]
+               (when (relevant-keys k)
+                 [(sanitize-key k) (sanitize-val k v)])))))
+
 (defonce ^{:doc "A map of environment variables."}
-         config (read-env-file "resources/secrets.edn"))
+         config (merge (read-env-file "resources/secrets.edn")
+                       (read-system-env)))
 

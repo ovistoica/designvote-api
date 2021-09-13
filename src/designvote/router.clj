@@ -4,6 +4,8 @@
             [reitit.swagger-ui :as swagger-ui]
             [muuntaja.core :as m]
             [reitit.ring.middleware.muuntaja :as muuntaja]
+            [reitit.ring.middleware.parameters :as pmw]
+            [reitit.ring.middleware.multipart :as multipart]
             [reitit.coercion.spec :as coercion-spec]
             [reitit.ring.coercion :as coercion]
             [reitit.ring.middleware.exception :as exception]
@@ -30,19 +32,21 @@
      :handler (swagger/create-swagger-handler)}}])
 
 (def router-config
-  { :validate  rs/validate
-   ;:reitit.middleware/transform dev/print-request-diffs ;; This is for debugging purposes
-   :exception pretty/exception
-   :conflicts (fn [conflicts]
-                (println (r-exception/format-exception :path-conflicts nil conflicts)))
-   :data      {:coercion   coercion-spec/coercion
-               :muuntaja   m/instance
-               :middleware [swagger/swagger-feature
-                            muuntaja/format-middleware
-                            coercion/coerce-exceptions-middleware
-                            coercion/coerce-request-middleware
-                            coercion/coerce-response-middleware
-                            mw/exception-middleware]}})
+  {:validate                    rs/validate
+   :reitit.middleware/transform dev/print-request-diffs     ;; This is for debugging purposes
+   :exception                   pretty/exception
+   :conflicts                   (fn [conflicts]
+                                  (println (r-exception/format-exception :path-conflicts nil conflicts)))
+   :data                        {:coercion   coercion-spec/coercion
+                                 :muuntaja   m/instance
+                                 :middleware [pmw/parameters-middleware
+                                              multipart/multipart-middleware
+                                              swagger/swagger-feature
+                                              muuntaja/format-middleware
+                                              coercion/coerce-exceptions-middleware
+                                              coercion/coerce-request-middleware
+                                              coercion/coerce-response-middleware
+                                              mw/exception-middleware]}})
 
 (defn cors-middleware
   "Middleware to allow different origins"

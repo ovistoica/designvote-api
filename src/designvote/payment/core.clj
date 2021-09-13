@@ -11,7 +11,7 @@
 
 (def  ^String monthly-plan (:monthly-plan config))
 (def  ^String yearly-plan (:yearly-plan config))
-(def  ^String signing-secret (:signing-secret config))
+(def  ^String signing-secret (:stripe-signing-secret config))
 
 (def subscription-status #{:trialing :active :past_due :canceled :unpaid})
 
