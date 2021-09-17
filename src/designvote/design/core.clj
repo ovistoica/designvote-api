@@ -20,10 +20,10 @@
 
 (defn create-design-thumbnail [path1 path2]
   "Generate a design thumbnail from two versions of the poll"
-  (let [img1 (mu/thumbnail (mu/buffered-image path1))
-        img2 (mu/thumbnail (mu/buffered-image path2))]
+  (let [img1 (m/thumbnail (m/buffered-image path1))
+        img2 (m/thumbnail (m/buffered-image path2))]
     (-> (m/concat-images img1 img2)
-        (mu/write-image "resources/final.jpeg"))))
+        (m/write-image "resources/final.jpeg"))))
 
 
 (comment
