@@ -9,6 +9,7 @@
             [buddy.core.codecs :as c])
   (:import java.util.UUID))
 
+
 (defn get-latest-designs-paginated
   "Get latest design polls paginated by 10"
   [db]
@@ -98,6 +99,14 @@
                    {:status  500
                     :headers {}
                     :body    {:message "Something went wrong. Please try again"}}))))
+
+
+(defn create-design-with-versions! [db]
+  (fn [{{mp :multipart} :parameters}]
+    (let [[img1 img2] (map :tempfile (take 2 (:versions mp)))]
+      (d/create-design-thumbnail img1 img2)
+      (rr/response mp))))
+
 
 (defn add-design-version!
   [db]
@@ -206,3 +215,4 @@
           design-id (-> parameters :path :design-id)]
       (db/insert-feedback! db (assoc body :design-id design-id))
       (rr/created (str responses/base-url "/designs/" design-id)))))
+

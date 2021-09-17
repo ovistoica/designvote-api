@@ -3,7 +3,23 @@
             [designvote.design.handlers :as design]
             [designvote.responses :as responses]
             [spec-tools.data-spec :as ds]
-            [clojure.spec.alpha :as s]))
+            [clojure.spec.alpha :as s]
+            [reitit.ring.middleware.multipart :as multipart]))
+
+(defn routes-v2
+  [env]
+  (let [db (:jdbc-url env)]
+    ["/designs" {:swagger {:tags ["designs V2"]}}
+     [""
+      {;:middleware [[mw/wrap-auth0]]
+       :post       {:handler    (design/create-design-with-versions! db)
+                    :parameters {:multipart {:versions   [multipart/temp-file-part]
+                                             :name       string?
+                                             :designType string?
+                                             :question    string?}}
+                    :responses  {201 {:body {:designId string?}}}
+                    :summary    "Create a design with design versions"}}]]))
+
 
 (defn routes
   [env]
@@ -66,10 +82,10 @@
                      :summary    "Publish a design to be ready for voting"}}]
 
 
-      ["/versions" {:middleware [[mw/wrap-auth0] [mw/wrap-design-owner db]]}
+      ["/versions" #_{:middleware [[mw/wrap-auth0] [mw/wrap-design-owner db]]}
        [""
         {:post   {:handler    (design/add-design-version! db)
-                  :responses  {201 {:body {:version-id string?}}}
+                  :responses  {200 {:body map? #_{:version-id string?}}}
                   :parameters {:path {:design-id string?}
                                :body {:name        string?
                                       :pictures    vector?
@@ -89,11 +105,11 @@
                   :summary    "Delete a design version"}}]
        ["/multiple"
         {:post {:handler    (design/add-multiple-design-versions db)
-                :response   {201 {:body {:design-id string?}}}
-                :parameters {:path {:design-id string?}
-                             :body {:versions [{:name        string?
-                                                :pictures    vector?
-                                                :description (s/nilable string?)}]}}
+                :response   {200 {:body map?}}
+                :parameters {:path      {:design-id string?}
+                             :multipart {:v1    multipart/temp-file-part
+                                         :v2    multipart/temp-file-part
+                                         :hello string?}}
                 :summary    "Upload multiple design versions"}}]]
 
 

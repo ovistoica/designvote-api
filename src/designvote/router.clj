@@ -4,7 +4,7 @@
             [reitit.swagger-ui :as swagger-ui]
             [muuntaja.core :as m]
             [reitit.ring.middleware.muuntaja :as muuntaja]
-            [reitit.ring.middleware.parameters :as pmw]
+            [reitit.ring.middleware.parameters :as parameters]
             [reitit.ring.middleware.multipart :as multipart]
             [reitit.coercion.spec :as coercion-spec]
             [reitit.ring.coercion :as coercion]
@@ -39,14 +39,26 @@
                                   (println (r-exception/format-exception :path-conflicts nil conflicts)))
    :data                        {:coercion   coercion-spec/coercion
                                  :muuntaja   m/instance
-                                 :middleware [pmw/parameters-middleware
-                                              multipart/multipart-middleware
+                                 :middleware [;; swagger feature
                                               swagger/swagger-feature
-                                              muuntaja/format-middleware
-                                              coercion/coerce-exceptions-middleware
-                                              coercion/coerce-request-middleware
+                                              ;; query-params & form-params
+                                              parameters/parameters-middleware
+                                              ;; content-negotiation
+                                              muuntaja/format-negotiate-middleware
+                                              ;; encoding response body
+                                              muuntaja/format-response-middleware
+                                              ;; exception handling
+                                              exception/exception-middleware
+                                              ;; decoding request body
+                                              muuntaja/format-request-middleware
+                                              ;; coercing response bodys
                                               coercion/coerce-response-middleware
-                                              mw/exception-middleware]}})
+                                              ;; coercing request parameters
+                                              coercion/coerce-request-middleware
+                                              ;; multipart
+                                              multipart/multipart-middleware
+                                              ;; convert all parameters to kebab-case
+                                              mw/wrap-kebab-case]}})
 
 (defn cors-middleware
   "Middleware to allow different origins"
@@ -62,7 +74,9 @@
        ["/v1"
         (design/routes env)
         (account/routes env)
-        (payment/routes env)]]
+        (payment/routes env)]
+       ["/v2"
+        (design/routes-v2 env)]]
 
       router-config)
     (ring/routes

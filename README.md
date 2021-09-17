@@ -1,44 +1,78 @@
-# designvote-api
+# Designvote API
 
-FIXME: description
+The API for the Designvote Website
 
-## Installation
+## Tech Stack
 
-Download from http://example.com/FIXME.
+**Client:** React, Typescript, Chakra-UI, Zustand, Auth0
 
-## Usage
+**Server (this repo):** Clojure, Reitit, PostgreSQL, Auth0, DigitalOcean Spaces, Stripe
 
-FIXME: explanation
+## Environment Variables
 
-    $ java -jar designvote-api-0.1.0-standalone.jar [args]
+To run this project, you will need to add the following environment variables to your `resources/secrets.edn` file
 
-## Options
+```edn
+# resources/secrets.edn 
+  
+{:stripe-secret      "example"
+ :signing-secret     "example"
+ :yearly-plan        "example"
+ :monthly-plan       "example"
+ :aws-access-key     "example"
+ :aws-secret-key     "example"
+ :aws-s3-bucket-name "example"
+ :aws-s3-endpoint    "example"}
+ ```
 
-FIXME: listing of options this app accepts.
+## Run Locally
 
-## Examples
+Clone the project
 
-...
+```bash
+  git clone git@github.com:ovistoica/designvote-api.git
+```
 
-### Bugs
+Go to the project directory
 
-...
+```bash
+  cd designvote-api
+```
 
-### Any Other Sections
-### That You Think
-### Might be Useful
+Start a repl
 
-## License
+```bash
+  lein repl
+```
 
-Copyright © 2021 FIXME
+Start the server
 
-This program and the accompanying materials are made available under the
-terms of the Eclipse Public License 2.0 which is available at
-http://www.eclipse.org/legal/epl-2.0.
+```bash
+  user=> (start)
+```
 
-This Source Code may also be made available under the following Secondary
-Licenses when the conditions for such availability set forth in the Eclipse
-Public License, v. 2.0 are satisfied: GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or (at your
-option) any later version, with the GNU Classpath Exception which is available
-at https://www.gnu.org/software/classpath/license.html.
+## Deployment
+
+The project is deployed on heroku so when you push to the master branch, it will deploy automatically
+
+## API Reference
+
+#### Get all items
+
+```http
+  GET /api/items
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `api_key` | `string` | **Required**. Your API key |
+
+#### Upload multiple versions for a design
+
+```http
+  POST /v1/design/${design-id}/versions/multiple
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `design-id`      | `string` | **Required**. Id of design |

@@ -12,7 +12,8 @@
             [designvote.account.handlers :as h]
             [clojure.set :refer [rename-keys]]
             [ragtime.repl :as repl]
-            [designvote.payment.core :as p]))
+            [designvote.payment.core :as p]
+            [ring.util.response :as rr]))
 
 
 (ig-repl/set-prep!
@@ -33,46 +34,66 @@
    :migrations (rjdbc/load-resources "migrations")
    :reporter   println})
 
+(comment
+  (repl/migrate config))
+
+
+
+
+
+
+(defn create-design-versions! [db]
+  (fn [{{mp :multipart} :parameters}]
+    (let [images (:versions mp)
+          design-info (dissoc mp :versions)])
+    ;TODO Resize and keep quality
+
+    ;TODO Upload images to DO SPaces
+
+    ;TODO See which ones failed
+
+    ;TODO I see t
+
+
+    (clojure.pprint/pprint mp)
+    (rr/response mp)))
+
+
 
 
 
 (comment
 
-  (repl/migrate config)
+  (def handler (create-design-versions! db))
+
+  (def mock-req
+    (assoc (mock/request :post "/v1/design/DESIGN_ID_TO_CHANGE/versions/multiple")
+      :claims {:sub "facebook|5841010855939759"}
+      :parameters {})))
 
 
-  (adb/create-account! db {:email "test@awdawd.com"
-                           :name  "test"
-                           :uid   "awdawd"})
-
-  (def handler (h/get-account db))
-  (def check-h (ph/create-checkout-session db))
 
 
-  (handler {})
 
+
+
+;; Account testing
+(comment
   (adb/get-account db "google-oauth2|117984597083645660112")
-  (p/add-stripe-id-to-user! db (adb/get-account db "facebook|5841010855939759"))
   (adb/get-account db "facebook|5841010855939759")
 
-  (adb/update-account! db {:uid "facebook|5841010855939759"} {:subscription-status :trialing})
-  (def handler (h/create-account! db))
+  (adb/update-account! db {:uid "facebook|5841010855939759"} {:subscription-status :trialing}))
 
 
-  (sql/find-by-keys db :account {:uid "this_is_a_test3"})
 
-  (handler request)
 
-  (p/add-stripe-id-to-user! db (adb/get-account db "google-oauth2|117984597083645660112"))
 
-  (ddb/get-latest-public-designs-paginated db )
-  (count (sql/find-by-keys db :design {:public true}))
 
-  (ddb/count-user-designs db "google-oauth2|117984597083645660112")
-  (ddb/find-all-user-designs! db "google-oauth2|117984597083645660112"))
 
-; comment copied from handlers
+;; Test functions for payment
 (comment
+
+  (p/add-stripe-id-to-user! db (adb/get-account db "facebook|5841010855939759"))
 
   (def mock-req
     (assoc (mock/request :post "/v1/payment/checkout")
@@ -81,10 +102,8 @@
                           :cancel-url  "https://designvote.io"
                           :price-id    "price_1JCNcwIGGMueBEvzdPAkKP47"}}))
 
-
   (def db (-> state/system :db/postgres))
 
   (def handler (create-checkout-session db))
-
 
   (handler mock-req))
