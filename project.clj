@@ -23,12 +23,8 @@
                  [image-resizer "0.1.10"]
                  [com.stripe/stripe-java "20.68.0"]
                  [com.amazonaws/aws-java-sdk-core "1.11.968"]
-                 [com.amazonaws/aws-java-sdk-s3 "1.11.968"]]
-
-
-
-
-
+                 [com.amazonaws/aws-java-sdk-s3 "1.11.968"]
+                 [org.clojure/core.async "1.3.618"]]
 
   :profiles {:uberjar {:aot      :all
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}

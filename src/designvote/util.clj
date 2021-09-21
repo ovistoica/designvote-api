@@ -21,7 +21,7 @@
 (defn uuid-str
   "Generates a unique UUID "
   []
-  (.toString (UUID/randomUUID)))
+  (str (UUID/randomUUID)))
 
 (defn uuid
   []

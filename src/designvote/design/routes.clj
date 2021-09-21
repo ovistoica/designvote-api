@@ -11,14 +11,15 @@
   (let [db (:jdbc-url env)]
     ["/designs" {:swagger {:tags ["designs V2"]}}
      [""
-      {;:middleware [[mw/wrap-auth0]]
-       :post {:handler    (design/create-design-with-versions! db)
-              :parameters {:multipart {:versions   [multipart/temp-file-part]
-                                       :name       string?
-                                       :designType string?
-                                       :question   string?}}
-              :responses  {201 {:body {:designId string?}}}
-              :summary    "Create a design with design versions"}}]]))
+      {:middleware [[mw/wrap-auth0]]
+       :post       {:handler    (design/create-design-with-versions! db)
+                    :parameters {:multipart {:versions   [multipart/temp-file-part]
+                                             :name       string?
+                                             :designType string?
+                                             :question   string?
+                                             :isPublic   string?}}
+                    :responses  {201 {:body {:designId string?}}}
+                    :summary    "Create a design with design versions"}}]]))
 
 
 (defn routes
@@ -104,7 +105,7 @@
                                :body {:version-id string?}}
                   :summary    "Delete a design version"}}]
        ["/multiple"
-        {:post {:handler    (design/add-multiple-design-versions db)
+        {:post {:handler    (design/add-multiple-design-versions! db)
                 :response   {201 {:body {:design-id string?}}}
                 :parameters {:path {:design-id string?}
                              :body {:versions [{:name        string?

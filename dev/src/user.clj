@@ -8,12 +8,14 @@
             [ragtime.jdbc :as rjdbc]
             [designvote.account.db :as adb]
             [designvote.design.db :as ddb]
+            [designvote.design.handlers :as dh]
             [designvote.payment.handlers :as ph]
             [designvote.account.handlers :as h]
+            [clojure.java.io :as io]
             [clojure.set :refer [rename-keys]]
             [ragtime.repl :as repl]
             [designvote.payment.core :as p]
-            [ring.util.response :as rr]))
+            [ring.mock.request :as mock]))
 
 
 (ig-repl/set-prep!
@@ -37,34 +39,25 @@
 (comment
   (repl/migrate config))
 
-
-
-
-
-
-(defn create-design-versions! [db]
-  (fn [{{mp :multipart} :parameters}]
-    (let [images (:versions mp)
-          design-info (dissoc mp :versions)])
-    ;TODO Resize and keep quality
-
-    ;TODO Upload images to DO SPaces
-
-    ;TODO See which ones failed
-
-    ;TODO I see t
-
-
-    (clojure.pprint/pprint mp)
-    (rr/response mp)))
-
-
-
-
-
 (comment
 
-  (def handler (create-design-versions! db))
+  (def versions [{:tempfile (io/file "resources/lion_king1.jpeg")}
+                 {:tempfile (io/file "resources/lion_king2.jpeg")}
+                 {:tempfile (io/file "resources/lion_king3.jpeg")}])
+
+  (def req (assoc (mock/request :post "/v2/designs")
+             :claims {:sub "google-oauth2|117984597083645660112"}
+             :parameters {:multipart {:versions versions
+                                      :name "test-full-design"
+                                      :question "Is this design full?"
+                                      :design-type "logo"
+                                      :is-public true}}))
+
+  (ddb/get-latest-public-designs-paginated db)
+  (ddb/find-design-by-id db "0b423b56-9470-4c5b-9447-88d5d17267a7")
+
+  (def handler (dh/create-design-with-versions! db))
+  (handler req)
 
   (def mock-req
     (assoc (mock/request :post "/v1/design/DESIGN_ID_TO_CHANGE/versions/multiple")

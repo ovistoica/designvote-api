@@ -2,11 +2,9 @@
   (:require [ring.util.response :as rr]
             [designvote.responses :as responses]
             [designvote.design.db :as db]
-            [buddy.core.hash :as hash]
             [clojure.set :refer [rename-keys]]
             [designvote.design.core :as d]
-            [designvote.util :as u]
-            [buddy.core.codecs :as c])
+            [designvote.util :as u])
   (:import java.util.UUID))
 
 
@@ -86,7 +84,7 @@
 
 
 
-(defn add-multiple-design-versions
+(defn add-multiple-design-versions!
   [db]
   (fn [request]
     (let [design-id (-> request :parameters :path :design-id)
@@ -100,12 +98,30 @@
                     :headers {}
                     :body    {:message "Something went wrong. Please try again"}}))))
 
-
 (defn create-design-with-versions! [db]
-  (fn [{{mp :multipart} :parameters}]
-    (let [[img1 img2] (map :tempfile (take 2 (:versions mp)))]
-      (d/create-design-thumbnail img1 img2)
-      (rr/response mp))))
+  "Insert a new design along with its versions in the DB.
+
+   The version's images are uploaded to DO Spaces along with the
+   newly created thumbnail. Urls to the new images are stored in DB."
+  (fn [req]
+    (let [mp (-> req :parameters :multipart)
+          design (dissoc mp :versions)
+          uid (-> req :claims :sub)
+          v-files (map :tempfile (:versions mp))
+          design-id (u/uuid-str)
+          {:keys [img-url version-urls]} (d/upload-design-media! v-files design-id)
+          extra-keys {:design-id design-id
+                      :uid uid
+                      :img img-url
+                      :short-url (d/generate-short-url design-id)}
+
+          created? (db/insert-full-design! db (merge design extra-keys ) version-urls)]
+      (if created?
+        (rr/created (str responses/base-url "/designs/" design-id)
+                    {:designId design-id})
+        {:status 500
+         :body   {:message "Something went wrong. Please try again"}}))))
+
 
 
 (defn add-design-version!
@@ -179,7 +195,7 @@
   [db]
   (fn [request]
     (let [design-id (-> request :parameters :path :design-id)
-          short-url (-> design-id (hash/blake2b 3) (c/bytes->hex))
+          short-url (d/generate-short-url design-id)
           published? (db/update-design! db {:design-id design-id
                                             :short-url short-url
                                             :public    true})]

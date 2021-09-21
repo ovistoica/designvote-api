@@ -1,7 +1,6 @@
 (ns designvote.media.core
   "Helpful functions to deal with images and other media"
-  (:require [designvote.media.util :refer :all]
-            [image-resizer.resize :as r]
+  (:require [image-resizer.resize :as r]
             [clojure.java.io :as io]
             [clojure.string :as string])
   (:import (javax.imageio ImageIO ImageWriter ImageWriteParam IIOImage)
@@ -24,6 +23,7 @@
   [(.getWidth image) (.getHeight image)])
 
 (defn get-format [content-type]
+  "Ex: image/png -> :png"
   (-> content-type
       (string/split #"/")
       (second)
@@ -55,7 +55,7 @@
   "Return a BufferedImage instance based on image input"
   (condp instance? image
     BufferedImage image
-    String (io/file image)
+    String (ImageIO/read (io/file image))
     ByteArrayOutputStream (stream->buff-img image)
     File (ImageIO/read ^File image)
     InputStream (ImageIO/read ^InputStream image)
@@ -80,7 +80,8 @@
       (let [y-offset (/ (- h w) 2)]
         (crop-image img w w {:y y-offset})))))
 
-(defn thumbnail [img]
+(defn thumbnail-chunk [img]
+  "Resize an image to be half of thumbnail."
   (let [half-thumbnail (/ thumb-width 2)
         x-offset (/ (- thumb-height half-thumbnail) 2)]
     (-> img
@@ -128,3 +129,8 @@
       (.drawImage ^BufferedImage image2 hw 0 nil)
       (.dispose))
     concat))
+
+(comment
+
+  (concat-images (buffered-image "resources/lion_king1.jpeg")
+                 (buffered-image "resources/lion_king2.jpeg")))

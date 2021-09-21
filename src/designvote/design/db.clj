@@ -3,7 +3,8 @@
   (:require [next.jdbc.sql :as sql]
             [next.jdbc :as jdbc]
             [honey.sql.helpers :refer [select where from order-by offset limit]]
-            [honey.sql :as h])
+            [honey.sql :as h]
+            [designvote.util :as u])
   (:import java.util.UUID))
 
 
@@ -114,6 +115,27 @@
                                              (:options db))]
         (and (pos? (count inserted-versions))
              (pos? (count inserted-pics)))))))
+
+
+
+(defn insert-full-design! [db design version-urls]
+  (clojure.pprint/pprint design)
+  (let [design-id (:design-id design)
+        versions (map-indexed (fn [idx url] {:name       (str "#" (inc idx))
+                                             :image-url  url
+                                             :version-id (u/uuid-str)
+                                             :design-id  design-id}) version-urls)
+        v-cols (-> versions (first) (keys) (vec))
+        opts (:options db)]
+    (clojure.pprint/pprint v-cols)
+    (clojure.pprint/pprint versions)
+
+    (jdbc/with-transaction [tx db]
+      (let [inserted-design (sql/insert! tx :design design opts)
+            inserted-versions (sql/insert-multi! tx :design-version v-cols (map #(vec (vals %)) versions) opts)]
+        (and inserted-design
+             (pos? (count inserted-versions)))))))
+
 
 ;TODO ensure correct verification of insertion
 (defn insert-design-version!
