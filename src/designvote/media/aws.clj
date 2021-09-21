@@ -18,6 +18,7 @@
 (def ^:private ^String secret-key (:aws-secret-key config))
 (def ^:private ^String bucket (:aws-s3-bucket-name config))
 (def ^:private ^String endpoint (:aws-s3-endpoint config))
+(def ^:private ^String cdn-endpoint (:do-cdn-endpoint config))
 
 
 (def service-endpoint (str "https://" endpoint))
@@ -52,11 +53,10 @@
       (doto (PutObjectRequest. bucket name is meta)
         (.withCannedAcl CannedAccessControlList/PublicRead)))))
 
-()
 
 (defn image-url [^String name]
-  "Build the access url of a file name"
-  (str "https://" bucket "." endpoint "/" name))
+  "Build the access url of a file name from cdn"
+  (str "https://" bucket "." cdn-endpoint "/" name))
 
 (defn upload-image! [^BufferedImage input ^String name]
   "Upload an image to the S3 managed Digital Ocean Spaces"

@@ -9,8 +9,10 @@
                      "MONTHLY_PLAN"
                      "AWS_ACCESS_KEY"
                      "AWS_SECRET_KEY"
-                     "AWS_ENDPOINT"
-                     "AWS_S3_BUCKET_NAME"})
+                     "AWS_S3_ENDPOINT"
+                     "AWS_S3_BUCKET_NAME"
+                     "DO_CDN_ENDPOINT"})
+
 
 (defn- keywordize [s]
   (-> (str/lower-case s)

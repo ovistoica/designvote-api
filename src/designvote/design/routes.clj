@@ -83,10 +83,10 @@
                      :summary    "Publish a design to be ready for voting"}}]
 
 
-      ["/versions" #_{:middleware [[mw/wrap-auth0] [mw/wrap-design-owner db]]}
+      ["/versions" {:middleware [[mw/wrap-auth0] [mw/wrap-design-owner db]]}
        [""
         {:post   {:handler    (design/add-design-version! db)
-                  :responses  {200 {:body map? #_{:version-id string?}}}
+                  :responses  {201 {:body {:version-id string?}}}
                   :parameters {:path {:design-id string?}
                                :body {:name        string?
                                       :pictures    vector?

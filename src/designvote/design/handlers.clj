@@ -14,8 +14,10 @@
   (fn [req]
     (let [limit (-> req :parameters :query :limit)
           offset (-> req :parameters :query :offset)
-          designs (db/get-latest-public-designs-paginated db {:limit  limit
-                                                              :offset offset})]
+          designs
+          (db/select-latest-designs db {:limit  limit
+                                        :offset offset})]
+
       (rr/response {:designs (map u/->camelCase designs)}))))
 
 
@@ -111,11 +113,11 @@
           design-id (u/uuid-str)
           {:keys [img-url version-urls]} (d/upload-design-media! v-files design-id)
           extra-keys {:design-id design-id
-                      :uid uid
-                      :img img-url
+                      :uid       uid
+                      :img       img-url
                       :short-url (d/generate-short-url design-id)}
 
-          created? (db/insert-full-design! db (merge design extra-keys ) version-urls)]
+          created? (db/insert-full-design! db (merge design extra-keys) version-urls)]
       (if created?
         (rr/created (str responses/base-url "/designs/" design-id)
                     {:designId design-id})

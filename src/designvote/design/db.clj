@@ -13,10 +13,10 @@
   (let [designs (sql/find-by-keys db :design {:uid uid})]
     designs))
 
-(defn get-latest-public-designs-paginated
-  "Retrieves the most recent created polls"
+(defn select-latest-designs
+  "Retrieves the most recent created public polls"
   ([db]
-   (get-latest-public-designs-paginated db {}))
+   (select-latest-designs db {}))
   ([db {:keys [offset-by limit-by] :or {offset-by 0 limit-by 10}}]
    (jdbc/execute! db (-> #_(select :name :design-id :created-at)
                        (select :*)
@@ -119,7 +119,6 @@
 
 
 (defn insert-full-design! [db design version-urls]
-  (clojure.pprint/pprint design)
   (let [design-id (:design-id design)
         versions (map-indexed (fn [idx url] {:name       (str "#" (inc idx))
                                              :image-url  url
@@ -127,8 +126,6 @@
                                              :design-id  design-id}) version-urls)
         v-cols (-> versions (first) (keys) (vec))
         opts (:options db)]
-    (clojure.pprint/pprint v-cols)
-    (clojure.pprint/pprint versions)
 
     (jdbc/with-transaction [tx db]
       (let [inserted-design (sql/insert! tx :design design opts)
