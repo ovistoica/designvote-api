@@ -13,8 +13,8 @@
               :name              string?
               :description       (s/nilable string?)
               (ds/opt :pictures) [picture]
-              (ds/opt :votes)    [vote]
-              })
+              (ds/opt :votes)    [vote]})
+
 
 (def opinion {:design-id  string?
               :version-id string?
@@ -25,7 +25,7 @@
   {:name              string?
    :description       (s/nilable string?)
    :uid               string?
-   :public            boolean?
+   :is-public         boolean?
    :total-votes       int?
    :short-url         (s/nilable string?)
    :design-type       (s/nilable string?)
