@@ -4,6 +4,8 @@
             [reitit.swagger-ui :as swagger-ui]
             [muuntaja.core :as m]
             [reitit.ring.middleware.muuntaja :as muuntaja]
+            [reitit.ring.middleware.parameters :as parameters]
+            [reitit.ring.middleware.multipart :as multipart]
             [reitit.coercion.spec :as coercion-spec]
             [reitit.ring.coercion :as coercion]
             [reitit.ring.middleware.exception :as exception]
@@ -30,19 +32,33 @@
      :handler (swagger/create-swagger-handler)}}])
 
 (def router-config
-  { :validate  rs/validate
-   ;:reitit.middleware/transform dev/print-request-diffs ;; This is for debugging purposes
-   :exception pretty/exception
-   :conflicts (fn [conflicts]
-                (println (r-exception/format-exception :path-conflicts nil conflicts)))
-   :data      {:coercion   coercion-spec/coercion
-               :muuntaja   m/instance
-               :middleware [swagger/swagger-feature
-                            muuntaja/format-middleware
-                            coercion/coerce-exceptions-middleware
-                            coercion/coerce-request-middleware
-                            coercion/coerce-response-middleware
-                            mw/exception-middleware]}})
+  {:validate                    rs/validate
+   :reitit.middleware/transform dev/print-request-diffs     ;; This is for debugging purposes
+   :exception                   pretty/exception
+   :conflicts                   (fn [conflicts]
+                                  (println (r-exception/format-exception :path-conflicts nil conflicts)))
+   :data                        {:coercion   coercion-spec/coercion
+                                 :muuntaja   m/instance
+                                 :middleware [;; swagger feature
+                                              swagger/swagger-feature
+                                              ;; query-params & form-params
+                                              parameters/parameters-middleware
+                                              ;; content-negotiation
+                                              muuntaja/format-negotiate-middleware
+                                              ;; encoding response body
+                                              muuntaja/format-response-middleware
+                                              ;; exception handling
+                                              exception/exception-middleware
+                                              ;; decoding request body
+                                              muuntaja/format-request-middleware
+                                              ;; coercing response bodys
+                                              coercion/coerce-response-middleware
+                                              ;; coercing request parameters
+                                              coercion/coerce-request-middleware
+                                              ;; multipart
+                                              multipart/multipart-middleware
+                                              ;; convert all parameters to kebab-case
+                                              mw/wrap-kebab-case]}})
 
 (defn cors-middleware
   "Middleware to allow different origins"
@@ -58,7 +74,9 @@
        ["/v1"
         (design/routes env)
         (account/routes env)
-        (payment/routes env)]]
+        (payment/routes env)]
+       ["/v2"
+        (design/routes-v2 env)]]
 
       router-config)
     (ring/routes

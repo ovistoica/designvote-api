@@ -1,0 +1,4 @@
+{:up   ["ALTER TABLE design
+           RENAME COLUMN public to is_public;"]
+ :down ["ALTER TABLE design
+          RENAME COLUMN is_public to public;"]}

@@ -2,7 +2,25 @@
   (:require [designvote.middleware :as mw]
             [designvote.design.handlers :as design]
             [designvote.responses :as responses]
-            [clojure.spec.alpha :as s]))
+            [spec-tools.data-spec :as ds]
+            [clojure.spec.alpha :as s]
+            [reitit.ring.middleware.multipart :as multipart]))
+
+(defn routes-v2
+  [env]
+  (let [db (:jdbc-url env)]
+    ["/designs" {:swagger {:tags ["designs V2"]}}
+     [""
+      {:middleware [[mw/wrap-auth0]]
+       :post       {:handler    (design/create-design-with-versions! db)
+                    :parameters {:multipart {:versions   [multipart/temp-file-part]
+                                             :name       string?
+                                             :designType string?
+                                             :question   string?
+                                             :isPublic   string?}}
+                    :responses  {201 {:body {:designId string?}}}
+                    :summary    "Create a design with design versions"}}]]))
+
 
 (defn routes
   [env]
@@ -10,7 +28,7 @@
     ["/designs" {:swagger {:tags ["designs"]}}
      [""
       {:middleware [[mw/wrap-auth0]]
-       :get        {:handler   (design/list-all-designs! db)
+       :get        {:handler   (design/list-all-user-designs db)
                     :responses {200 {:body responses/designs}}
                     :summary   "Get all designs"}
        :post       {:handler    (design/create-design! db)
@@ -22,7 +40,12 @@
                                         :design-type string?
                                         :vote-style  string?}}
                     :summary    "Create a design"}}]
-
+     ["/latest"
+      {:get {:handler    (design/get-latest-designs-paginated db)
+             :parameters {:query {(ds/opt :offset) int?
+                                  (ds/opt :limit)  int?}}
+             :responses  {200 {:body {:designs coll?}}}
+             :summary    "Retrieve latest designs paginated. Useful for feed"}}]
      ["/vote/short"
       ["/:short-url"
        {:get {:handler    (design/find-design-by-url db)
@@ -33,7 +56,7 @@
      ["/:design-id"
       [""
        {:middleware [[mw/wrap-auth0]]
-        :get        {:handler    (design/retrieve-design! db)
+        :get        {:handler    (design/retrieve-design-by-id db)
                      :responses  {200 {:body responses/design}}
                      :parameters {:path {:design-id string?}}
                      :summary    "Retrieve design"}
@@ -82,7 +105,7 @@
                                :body {:version-id string?}}
                   :summary    "Delete a design version"}}]
        ["/multiple"
-        {:post {:handler    (design/add-multiple-design-versions db)
+        {:post {:handler    (design/add-multiple-design-versions! db)
                 :response   {201 {:body {:design-id string?}}}
                 :parameters {:path {:design-id string?}
                              :body {:versions [{:name        string?
@@ -90,14 +113,13 @@
                                                 :description (s/nilable string?)}]}}
                 :summary    "Upload multiple design versions"}}]]
 
-
       ["/feedback"
        {:post {:summary    "Give feedback on a design (ratings and comments)"
                :handler    (design/give-feedback! db)
                :parameters {:path {:design-id string?}
-                            :body {:voter-name     (s/nilable string?)
-                                   :ratings  vector?
-                                   :comments vector?}}}}]
+                            :body {:voter-name (s/nilable string?)
+                                   :ratings    vector?
+                                   :comments   vector?}}}}]
       ["/votes"
        {:post   {:handler    (design/vote-design! db)
                  :parameters {:path {:design-id string?}

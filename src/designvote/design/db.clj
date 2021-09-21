@@ -2,15 +2,31 @@
   (:refer-clojure :exclude [filter group-by partition-by set update])
   (:require [next.jdbc.sql :as sql]
             [next.jdbc :as jdbc]
-            [honey.sql.helpers :refer [select where from]]
-            [honey.sql :as h])
+            [honey.sql.helpers :refer [select where from order-by offset limit]]
+            [honey.sql :as h]
+            [designvote.util :as u])
   (:import java.util.UUID))
 
 
-(defn find-all-user-designs!
+(defn find-all-user-designs
   [db uid]
   (let [designs (sql/find-by-keys db :design {:uid uid})]
     designs))
+
+(defn select-latest-designs
+  "Retrieves the most recent created public polls"
+  ([db]
+   (select-latest-designs db {}))
+  ([db {:keys [offset-by limit-by] :or {offset-by 0 limit-by 10}}]
+   (jdbc/execute! db (-> #_(select :name :design-id :created-at)
+                       (select :*)
+                       (from :design)
+                       (order-by [:created-at :desc])
+                       (offset offset-by)
+                       (limit 10)
+                       (h/format)))))
+
+
 
 (defn insert-design!
   [db design]
@@ -31,7 +47,7 @@
                       opinions (sql/find-by-keys conn :opinion query)]]
             (assoc version :pictures pictures :votes votes :opinions opinions)))))
 
-(defn find-design-by-id!
+(defn find-design-by-id
   [db design-id]
   (with-open [conn (jdbc/get-connection db)]
     (let [conn-opts (jdbc/with-options conn (:options db))
@@ -99,6 +115,24 @@
                                              (:options db))]
         (and (pos? (count inserted-versions))
              (pos? (count inserted-pics)))))))
+
+
+
+(defn insert-full-design! [db design version-urls]
+  (let [design-id (:design-id design)
+        versions (map-indexed (fn [idx url] {:name       (str "#" (inc idx))
+                                             :image-url  url
+                                             :version-id (u/uuid-str)
+                                             :design-id  design-id}) version-urls)
+        v-cols (-> versions (first) (keys) (vec))
+        opts (:options db)]
+
+    (jdbc/with-transaction [tx db]
+      (let [inserted-design (sql/insert! tx :design design opts)
+            inserted-versions (sql/insert-multi! tx :design-version v-cols (map #(vec (vals %)) versions) opts)]
+        (and inserted-design
+             (pos? (count inserted-versions)))))))
+
 
 ;TODO ensure correct verification of insertion
 (defn insert-design-version!

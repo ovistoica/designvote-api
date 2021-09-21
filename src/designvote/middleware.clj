@@ -4,7 +4,8 @@
             [clojure.pprint :as pp]
             [ring.util.response :as rr]
             [next.jdbc.sql :as sql]
-            [designvote.design.db :as design-db])
+            [designvote.design.db :as design-db]
+            [designvote.util :as u])
   (:import (java.sql SQLException)))
 
 (def wrap-auth0
@@ -56,10 +57,19 @@
                   (fn [request]
                     (let [uid (-> request :claims :sub)
                           design-id (-> request :parameters :path :design-id)
-                          design (design-db/find-design-by-id! db design-id)]
+                          design (design-db/find-design-by-id db design-id)]
                       (if (= (:uid design) uid)
                         (handler request)
                         (-> (rr/response {:message "You need to be the design owner"
                                           :data    (str "design-id " design-id)
                                           :type    :authorization-required})
                             (rr/status 401))))))})
+
+
+(def wrap-kebab-case
+  {:name        ::kebab-case
+   :description "Middleware to convert all resources to kebab case"
+   :wrap        (fn [handler]
+                  (fn [request]
+                    (handler (assoc request :parameters
+                                            (u/->kebab-case (:parameters request))))))})

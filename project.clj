@@ -11,6 +11,7 @@
                  [com.github.seancorfield/honeysql "2.0.0-rc5"]
                  [org.postgresql/postgresql "42.2.14"]
                  [camel-snake-kebab "0.4.2"]
+                 [clojure.java-time "0.3.0"]
                  [clj-http "3.10.0"]
                  [ovotech/ring-jwt "1.2.5"]
                  [camel-snake-kebab "0.4.2"]
@@ -19,8 +20,11 @@
                  [buddy/buddy-core "1.9.0"]
                  [ragtime "0.8.1"]
                  [cprop "0.1.18"]
-                 [com.stripe/stripe-java "20.68.0"]]
-
+                 [image-resizer "0.1.10"]
+                 [com.stripe/stripe-java "20.68.0"]
+                 [com.amazonaws/aws-java-sdk-core "1.11.968"]
+                 [com.amazonaws/aws-java-sdk-s3 "1.11.968"]
+                 [org.clojure/core.async "1.3.618"]]
 
   :profiles {:uberjar {:aot      :all
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}

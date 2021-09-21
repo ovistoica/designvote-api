@@ -15,3 +15,4 @@ pom.xml.asc
 dev/resources/config.edn
 .lsp/
 dev-config.edn
+resources/secrets.edn
