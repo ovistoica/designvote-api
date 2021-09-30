@@ -24,6 +24,8 @@
        (m/decode-response-body)
        :access_token))
 
+(get-test-token "testing@designvote.io")
+
 (defn create-auth0-user
   [{:keys [connection email password]}]
   (let [auth0 (-> state/system :auth/auth0)]

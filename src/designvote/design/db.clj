@@ -4,64 +4,18 @@
             [next.jdbc :as jdbc]
             [honey.sql.helpers :refer [select where from order-by offset limit]]
             [honey.sql :as h]
-            [designvote.util :as u])
-  (:import java.util.UUID))
+            [designvote.util :as u]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Design queries ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn find-all-user-designs
   [db uid]
-  (let [designs (sql/find-by-keys db :design {:uid uid})]
-    designs))
-
-(defn select-latest-designs
-  "Retrieves the most recent created public polls"
-  ([db]
-   (select-latest-designs db {}))
-  ([db {:keys [offset-by limit-by] :or {offset-by 0 limit-by 10}}]
-   (jdbc/execute! db (-> #_(select :name :design-id :created-at)
-                       (select :*)
-                       (from :design)
-                       (order-by [:created-at :desc])
-                       (offset offset-by)
-                       (limit 10)
-                       (h/format)))))
-
+  (sql/find-by-keys db :design {:uid uid}))
 
 
 (defn insert-design!
-  [db design]
-  (sql/insert! db :design design))
-
-(defn build-versions
-  "Given a db-connection and an array of design versions,
-  this function will populate the versions with their respective
-  pictures and votes"
-  [conn versions]
-  (into []
-        (doall
-          (for [{:keys [version-id] :as version} versions
-                :let [
-                      query {:version-id version-id}
-                      pictures (sql/find-by-keys conn :picture query)
-                      votes (sql/find-by-keys conn :vote query)
-                      opinions (sql/find-by-keys conn :opinion query)]]
-            (assoc version :pictures pictures :votes votes :opinions opinions)))))
-
-(defn find-design-by-id
-  [db design-id]
-  (with-open [conn (jdbc/get-connection db)]
-    (let [conn-opts (jdbc/with-options conn (:options db))
-          [design] (sql/find-by-keys conn-opts :design
-                                     {:design-id design-id})]
-      (if design (let [query (select-keys design [:design-id])
-                       versions (sql/find-by-keys conn-opts :design-version query)
-                       opinions (sql/find-by-keys conn-opts :opinion query)]
-                   (if (not (empty? versions))
-                     (assoc design :opinions opinions
-                                   :versions (build-versions conn-opts versions))
-                     design))
-                 nil))))
-
+  [db design-map]
+  (sql/insert! db :design design-map))
 
 (defn update-design!
   [db design]
@@ -75,6 +29,54 @@
       :next.jdbc/update-count
       (pos?)))
 
+
+(defn find-design-by-id
+  [db design-id]
+  (with-open [conn (jdbc/get-connection db)]
+    (let [conn-opts (jdbc/with-options conn (:options db))
+          query {:design-id design-id}
+          [design] (sql/find-by-keys conn-opts :design query)]
+      (when design
+        (let [versions (sql/find-by-keys conn-opts :design-version query)
+              opinions (sql/find-by-keys conn-opts :opinion query)
+              votes (sql/find-by-keys conn-opts :vote query)]
+          (assoc design :opinions opinions
+                        :versions versions
+                        :votes votes))))))
+
+(defn find-design-by-url
+  [db short-url]
+  (with-open [conn (jdbc/get-connection db)]
+    (let [conn-opts (jdbc/with-options conn (:options db))
+          [design] (sql/find-by-keys conn-opts :design
+                                     {:short-url short-url})]
+      (when design
+        (let [owner (jdbc/execute-one! conn-opts
+                                       ["SELECT name, picture, nickname FROM account WHERE
+                                                      uid = ? " (:uid design)])
+              query (select-keys design [:design-id])
+              versions (sql/find-by-keys conn-opts :design-version query)
+              opinions (sql/find-by-keys conn-opts :opinion query)
+              votes (sql/find-by-keys conn-opts :vote query)]
+          (if (not (empty? versions))
+            (assoc design :owner owner
+                          :opinions opinions
+                          :versions versions
+                          :votes votes)
+            design))))))
+
+(defn select-latest-designs
+  "Retrieves the most recent created public polls"
+  ([db]
+   (select-latest-designs db {}))
+  ([db {:keys [offset-by limit-by] :or {offset-by 0 limit-by 10}}]
+   (jdbc/execute! db (-> (select :*)
+                         (from :design)
+                         (order-by [:created-at :desc])
+                         (offset offset-by)
+                         (limit limit-by)
+                         (h/format)))))
+
 (defn count-user-designs
   "Get number of designs created by the user.
   Useful for trial periods of users"
@@ -84,74 +86,36 @@
                             (where [:= :uid uid])
                             (h/format))))
 
+(defn insert-design-version!
+  [db version-map]
+  (sql/insert! db :design-version version-map))
 
-(defn construct-db-pictures
-  "Extracts pictures uri from the design-version object
-  and returns an insertable array of pictures format
-  {:picture-id :uri :version-id}"
-  [design-version]
-  (let [pictures (:pictures design-version)]
-    (map #(assoc {:uri %}
-            :version-id (:version-id design-version)
-            :picture-id (str (UUID/randomUUID))) pictures)))
-
-
-(defn insert-multiple-design-versions!
-  "Given an array of versions containing the
-  :picture key as an array of uri's, extracts the
-  pictures from every design-version constructs the
-  insertable objects for versions and pictures and inserts them in the correct tables"
-  [db versions]
-  (let [version-cols [:version-id :design-id :name :description]
-        pic-cols [:uri :version-id :picture-id]
-        db-pictures (into [] (flatten (map construct-db-pictures versions)))]
-    (jdbc/with-transaction
-      [tx db]
-      (let [inserted-versions (sql/insert-multi! tx :design-version version-cols
-                                                 (map (apply juxt version-cols) versions)
-                                                 (:options db))
-            inserted-pics (sql/insert-multi! tx :picture pic-cols
-                                             (map (apply juxt pic-cols) db-pictures)
-                                             (:options db))]
-        (and (pos? (count inserted-versions))
-             (pos? (count inserted-pics)))))))
-
+(defn- insert-multiple-design-versions!
+  ([db design-id images-url-col]
+   (insert-multiple-design-versions! db design-id images-url-col {}))
+  ([db design-id images-url-col opts]
+   (let [versions
+         (map-indexed (fn [idx url] {:name       (str "#" (inc idx))
+                                     :image-url  url
+                                     :version-id (u/uuid-str)
+                                     :design-id  design-id}) images-url-col)
+         v-cols (-> versions (first) (keys) (vec))]
+     (sql/insert-multi! db :design-version v-cols (map #(vec (vals %)) versions) opts))))
 
 
 (defn insert-full-design! [db design version-urls]
   (let [design-id (:design-id design)
-        versions (map-indexed (fn [idx url] {:name       (str "#" (inc idx))
-                                             :image-url  url
-                                             :version-id (u/uuid-str)
-                                             :design-id  design-id}) version-urls)
-        v-cols (-> versions (first) (keys) (vec))
         opts (:options db)]
-
     (jdbc/with-transaction [tx db]
       (let [inserted-design (sql/insert! tx :design design opts)
-            inserted-versions (sql/insert-multi! tx :design-version v-cols (map #(vec (vals %)) versions) opts)]
+            inserted-versions (insert-multiple-design-versions! tx design-id version-urls opts)]
         (and inserted-design
              (pos? (count inserted-versions)))))))
 
 
-;TODO ensure correct verification of insertion
-(defn insert-design-version!
-  [db version]
-  (let [{:keys [pictures]} version
-        design-version (dissoc version :pictures)
-        db-pictures (into [] (map (fn [pic] [pic (:version-id version)
-                                             (str (UUID/randomUUID))]) pictures))]
-    (jdbc/with-transaction
-      [tx db]
-      (let [design-res (sql/insert! tx :design-version design-version (:options db))
-            pictures-res (sql/insert-multi! tx :picture
-                                            [:uri :version-id :picture-id]
-                                            db-pictures (:options db))]
-        true))))
-
 (defn update-design-version!
-  [db version]
-  (-> (sql/update! db :design-version version (select-keys version [:version-id]))
+  [db updated-map]
+  (-> (sql/update! db :design-version updated-map (select-keys updated-map [:version-id]))
       :next.jdbc/update-count
       (pos?)))
 
@@ -162,118 +126,46 @@
       (pos?)))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Votes, Ratings and Opinions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn choose-vote-design-version!
-  "Vote on a design version. If the user has
-  already voted on that version, update his
-  vote and don't make a new entry in db"
-  [db {:keys [version-id design-id uid] :as data}]
-  (let [vote-query {:design-id design-id :uid uid}
-        db-opts (:options db)
-        new-vote (select-keys data [:version-id :uid :vote-id :design-id])]
-    (jdbc/with-transaction [tx db]
-      (if-let [existent-vote (not-empty (sql/find-by-keys tx :vote vote-query db-opts))]
-        (sql/update! tx :vote {:version-id version-id} vote-query db-opts)
-        (do
-          (sql/insert! tx :vote new-vote db-opts)
-          (jdbc/execute-one! tx ["UPDATE design
-                            SET total_votes = total_votes + 1
-                            WHERE design_id = ?" design-id])
-          (jdbc/execute-one! tx ["UPDATE design_version
-                            SET votes = votes + 1
-                            WHERE version_id = ?" version-id]))))))
-
-(defn rate-vote-design-version!
-  "Vote on a design version. If the user has
-  already voted on that version, update his
-  vote and don't make a new entry in db"
-  [db {:keys [version-id design-id uid rating] :as data}]
-  (let [vote-keys {:version-id version-id :uid uid}
-        db-opts (:options db)
-        new-vote (select-keys data [:version-id :uid :rating :vote-id])]
-    (jdbc/with-transaction [tx db]
-      (if-let [existent-vote (-> (sql/find-by-keys tx :vote vote-keys db-opts)
-                                 not-empty)]
-        (sql/update! tx :vote {:rating rating} vote-keys db-opts)
-        (do
-          (sql/insert! tx :vote new-vote db-opts)
-          (jdbc/execute-one! tx ["UPDATE design
-                            SET total_votes = total_votes + 1
-                            WHERE design_id = ?" design-id])
-          (jdbc/execute-one! tx ["UPDATE design_version
-                            SET votes = votes + 1
-                            WHERE version_id = ?" version-id]))))))
-
-(defn unvote-design-version!
-  [db {:keys [version-id design-id vote-id]}]
-  (jdbc/with-transaction [tx db]
-    (sql/delete! tx :vote {:vote-id vote-id} (:options db))
-    (jdbc/execute-one! tx ["UPDATE design
-                            SET total_votes = total_votes - 1
-                            WHERE design_id = ?" design-id])
-    (jdbc/execute-one! tx ["UPDATE design_version
-                            SET votes = votes - 1
-                            WHERE version_id = ?" version-id])))
-
-
-(defn find-design-by-url
-  [db short-url]
-  (with-open [conn (jdbc/get-connection db)]
-
-    (let [conn-opts (jdbc/with-options conn (:options db))
-          [design] (sql/find-by-keys conn-opts :design
-                                     {:short-url short-url})]
-      (if design
-        (let [{:keys [nickname]} (jdbc/execute-one! conn-opts ["SELECT nickname FROM account WHERE
-                                                      uid = ? " (:uid design)])
-              query (select-keys design [:design-id])
-              versions (sql/find-by-keys conn-opts :design-version query)
-              opinions (sql/find-by-keys conn-opts :opinion query)]
-          (if (not (empty? versions))
-            (assoc design :nickname nickname
-                          :opinions opinions
-                          :versions (build-versions conn-opts versions))
-            design))
-        nil))))
 
 (defn insert-opinion!
   "Insert an opinion in db. Necessary keys on opinion map:
-   `:design-id` - FK for id of design
-   `:version-id` - FK for id of version
-   `:opinion` - The actual opinion text "
+
+   :design-id - Id of the design
+   :opinion   - The actual opinion text
+   :uid       - The id of the user who added the opinion"
   [db opinion-map]
   (sql/insert! db :opinion opinion-map))
 
 
-(defn build-ratings [ratings design-id voter-name]
-  (let [db-ratings
-        (into [] (for [[k v] ratings] {:version-id k
-                                       :rating     v
-                                       :design-id  design-id
-                                       :vote-id    (str (UUID/randomUUID))
-                                       :voter-name voter-name}))]
-    db-ratings))
+(defn- build-ratings [ratings design-id uid]
+  "Normalize kv ratings to insert in db"
+  (into [] (for [[k v] ratings] {:version-id (name k)
+                                 :rating     v
+                                 :uid        uid
+                                 :design-id  design-id})))
 
-(defn build-comments [comments design-id voter-name]
-  (let [db-comments
-        (into [] (for [[k v] comments] {:version-id k
-                                        :opinion    v
-                                        :design-id  design-id
-                                        :voter-name voter-name}))]
-    db-comments))
+(defn insert-ratings! [db {:keys [design-id ratings uid]}]
+  "Insert 5-star ratings for a design.
 
+   Parameters:
+   :design-id     The id of the design to insert ratings for
+   :uid           The id of the user who voted
+   :rating        A map with the version id as a key and a rating (1-5) as value"
+  (let [db-ratings (build-ratings ratings design-id uid)
+        rating-cols [:version-id :design-id :uid :rating]]
+    (-> (sql/insert-multi! db :vote rating-cols
+                           (map (apply juxt rating-cols) db-ratings) (:options db))
+        (count)
+        (pos?))))
 
-(defn insert-feedback!
-  "Insert comments and ratings in the opinion and vote tables
-  for a specific design"
-  [db {:keys [design-id ratings comments voter-name]}]
-  (let [db-comments (build-comments comments design-id voter-name)
-        comment-cols [:version-id :design-id :voter-name :opinion]
-        db-ratings (build-ratings ratings design-id voter-name)
-        rating-cols [:version-id :vote-id :design-id :voter-name :rating]]
-    (jdbc/with-transaction
-      [tx db]
-      (do (sql/insert-multi! tx :opinion comment-cols
-                             (map (apply juxt comment-cols) db-comments) (:options db))
-          (sql/insert-multi! tx :vote rating-cols
-                             (map (apply juxt rating-cols) db-ratings) (:options db))))))
+(defn insert-vote!
+  "Insert choose-best vote for a design.
+
+   Parameters inside the vote map:
+   :design-id     The id of the design to insert ratings for
+   :uid           The id of the user who voted
+   :version-id    The id of the version which was chosen"
+  [db vote-map]
+  (sql/insert! db :vote vote-map))

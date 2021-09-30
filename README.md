@@ -76,3 +76,76 @@ The project is deployed on heroku so when you push to the master branch, it will
 | Parameter | Type     | Description                       |
 | :-------- | :------- | :-------------------------------- |
 | `design-id`      | `string` | **Required**. Id of design |
+
+#### Vote on a design survey
+
+```http
+  POST /v1/design/vote/${design-id}/
+```
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `design-id`      | `string` | **Required**. Id of design |
+
+Body: 
+```edn
+{
+```
+
+## Screens
+
+#### Home Screen
+
+```http request
+/
+```
+
+#### Latest Screen
+
+```http request
+/latest
+```
+The screen with the latest public designs
+
+#### Popular Screen
+
+```http request
+/popular
+```
+The screen with the most popular designs
+
+#### Public Design Screen
+
+```http request
+/design/{designId}
+```
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `designId`      | `string` | **Required**. Id of design |
+The screen where users can vote on designs. If a user doesn't vote, he will not see results
+
+#### Designer screen
+The designer screen
+
+```http request
+/${nickname}
+```
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `nickname`      | `string` | **Required**. Nickname of the designers |
+
+#### Designer surveys
+The designer screen
+
+```http request
+/${nickname}/surveys
+```
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `nickname`      | `string` | **Required**. Nickname of the designers |
+
+#### Profile
+
+```http request
+/account/profile
+```
+The edit account settings

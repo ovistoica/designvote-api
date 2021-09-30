@@ -48,7 +48,7 @@
                                               ;; encoding response body
                                               muuntaja/format-response-middleware
                                               ;; exception handling
-                                              exception/exception-middleware
+                                              mw/exception-middleware
                                               ;; decoding request body
                                               muuntaja/format-request-middleware
                                               ;; coercing response bodys
@@ -56,9 +56,8 @@
                                               ;; coercing request parameters
                                               coercion/coerce-request-middleware
                                               ;; multipart
-                                              multipart/multipart-middleware
-                                              ;; convert all parameters to kebab-case
-                                              mw/wrap-kebab-case]}})
+                                              multipart/multipart-middleware]}})
+
 
 (defn cors-middleware
   "Middleware to allow different origins"

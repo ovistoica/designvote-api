@@ -1,0 +1,6 @@
+{:up   ["ALTER TABLE opinion
+           ADD COLUMN created_at TIMESTAMP not null default now(),
+           ADD COLUMN updated_at TIMESTAMP not null default now();"]
+ :down ["ALTER TABLE opinion
+          DROP COLUMN created_at,
+          DROP COLUMN updated_at;"]}
