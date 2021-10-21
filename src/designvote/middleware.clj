@@ -4,7 +4,7 @@
             [clojure.pprint :as pp]
             [ring.util.response :as rr]
             [next.jdbc.sql :as sql]
-            [designvote.design.db :as design-db]
+            [designvote.design.db.core :as design-db]
             [designvote.util :as u])
   (:import (java.sql SQLException)))
 
@@ -14,6 +14,18 @@
    :wrap        (fn [handler]
                   (jwt/wrap-jwt handler {:alg          :RS256
                                          :jwk-endpoint "https://designvote.eu.auth0.com/.well-known/jwks.json"}))})
+
+(def wrap-authenticated
+  {:name ::authenticated
+   :description "Middleware to check if user is authenticated. Returns 401 if no token was provided"
+   :wrap        (fn [handler]
+                  (fn [request]
+                    (let [uid (-> request :claims :sub)]
+                      (if uid
+                        (handler request)
+                        (-> (rr/response {:message "You need to be the authenticated for this operation"
+                                          :type    :authorization-required})
+                            (rr/status 401))))))})
 
 
 ;; type hierarchy
@@ -62,6 +74,21 @@
                         (handler request)
                         (-> (rr/response {:message "You need to be the design owner"
                                           :data    (str "design-id " design-id)
+                                          :type    :authorization-required})
+                            (rr/status 401))))))})
+
+(def wrap-opinion-owner
+  {:name        ::design-owner
+   :description "Middleware to check if a requestor is the opinion owner"
+   :wrap        (fn [handler db]
+                  (fn [request]
+                    (let [uid (-> request :claims :sub)
+                          opinion-id (-> request :parameters :path :opinion-id)
+                          opinion (design-db/get-opinion db opinion-id)]
+                      (if (= (:uid opinion) uid)
+                        (handler request)
+                        (-> (rr/response {:message "You need to be the opinion owner"
+                                          :data    (str "opinion-id " opinion-id)
                                           :type    :authorization-required})
                             (rr/status 401))))))})
 

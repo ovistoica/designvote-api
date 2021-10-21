@@ -1,5 +1,5 @@
 (ns designvote.design.core
-  (:require [designvote.design.db :as db]
+  (:require [designvote.design.db.core :as db]
             [designvote.account.db :as account-db]
             [designvote.media.core :as m]
             [designvote.payment.core :as stripe]

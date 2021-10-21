@@ -7,7 +7,7 @@
             [next.jdbc.sql :as sql]
             [ragtime.jdbc :as rjdbc]
             [designvote.account.db :as adb]
-            [designvote.design.db :as ddb]
+            [designvote.design.db.core :as ddb]
             [designvote.design.handlers :as dh]
             [designvote.payment.handlers :as ph]
             [designvote.account.handlers :as h]
@@ -16,7 +16,8 @@
             [ragtime.repl :as repl]
             [designvote.payment.core :as p]
             [ring.mock.request :as mock]
-            [muuntaja.core :as m]))
+            [muuntaja.core :as m])
+  (:import (java.net URLDecoder)))
 
 
 (ig-repl/set-prep!
@@ -29,6 +30,8 @@
 
 (def app (-> state/system :designvote/app))
 (def db (-> state/system :db/postgres))
+
+
 
 ; config for db migrations
 (def db-url (-> "dev/resources/config.edn" slurp ig/read-string :db/postgres :jdbc-url))
@@ -55,6 +58,18 @@
   (-> (app mock-req)
       (m/decode-response-body))
 
+  (def designId "06a0f157-fbc7-42b1-a56e-fe34a3983531")
+  (ddb/get-opinions-with-users2 db designId)
+  (ddb/find-design-by-id db "b1bbf331-c23f-41ba-ae83-fc74dc1e2478")
+
+  (ddb/update-design-votes-opinions! db designId :total-votes :+)
+
+  (ddb/find-design-by-id db designId)
+  (ddb/insert-opinion! db {:design-id designId
+                           :opinion "Asta e aia de increment doi"
+                           :uid google-user-id})
+
+
   (ddb/delete-design! db {:design-id "a195d905-d4fb-4892-8c00-a7856ebc8149"})
 
   (def versions [{:tempfile (io/file "resources/paper_chat1.jpeg")}
@@ -69,8 +84,12 @@
                                       :vote-style  "choose"
                                       :is-public   true}}))
 
-  (ddb/find-design-by-url db "9995a5")
+  (ddb/find-design-by-url db "f1e87c")
   (ddb/select-latest-designs db)
+  (ddb/get-opinion db 126)
+  (ddb/delete-opinion! db 126)
+  (ddb/update-design! db {:design-id   "54afe9d9-18e4-4cfc-89a6-421525186d36"
+                          :total-votes 6})
   (ddb/find-design-by-id db mock-design-id)
   (ddb/insert-vote! db {:design-id  mock-design-id
                         :uid        facebook-user-id
@@ -95,6 +114,8 @@
 (comment
   (adb/get-account db "google-oauth2|117984597083645660112")
   (adb/get-account db "facebook|5841010855939759")
+  (adb/get-public-account db "facebook|5841010855939759")
+
 
   (adb/update-account! db {:uid "facebook|5841010855939759"} {:subscription-status :trialing}))
 

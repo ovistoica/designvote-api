@@ -1,7 +1,7 @@
 (ns designvote.design.handlers
   (:require [ring.util.response :as rr]
             [designvote.responses :as responses]
-            [designvote.design.db :as db]
+            [designvote.design.db.core :as db]
             [clojure.set :refer [rename-keys]]
             [designvote.design.core :as d]
             [designvote.util :as u])
@@ -97,16 +97,18 @@
           uid (-> req :claims :sub)
           v-files (map :tempfile (:versions mp))
           design-id (u/uuid-str)
+          short-url (d/generate-short-url design-id)
           {:keys [img-url version-urls]} (d/upload-design-media! v-files design-id)
           extra-keys {:design-id design-id
                       :uid       uid
                       :img       img-url
-                      :short-url (d/generate-short-url design-id)}
+                      :short-url short-url}
 
           created? (db/insert-full-design! db (merge design extra-keys) version-urls)]
       (if created?
         (rr/created (str responses/base-url "/designs/" design-id)
-                    {:designId design-id})
+                    {:designId design-id
+                     :shortUrl short-url})
         {:status 500
          :body   {:message "Something went wrong. Please try again"}}))))
 
@@ -184,6 +186,35 @@
         (rr/not-found {:type    "design-not-found"
                        :message "design not found"})))))
 
+(defn update-opinion! [db]
+  (fn [{:keys [parameters]}]
+    (let [opinion-id (-> parameters :path :opinion-id)
+          opinion (-> parameters :body :opinion)
+          updated? (db/update-opinion! db opinion opinion-id)]
+      (if updated?
+        (rr/response {:message "Updated opinion"})
+        (rr/not-found {:type    :opinion-not-found
+                       :message "Opinion not found!"})))))
+
+(defn delete-opinion! [db]
+  (fn [{:keys [parameters]}]
+    (let [design-id (-> parameters :path :design-id)
+          opinion-id (-> parameters :path :opinion-id)
+          deleted? (db/delete-opinion! db design-id opinion-id)]
+      (if deleted?
+        (rr/response {:message "Deleted opinion"})
+        (rr/not-found {:type    :opinion-not-found
+                       :message "Opinion not found!"})))))
+
+;(defn upvote-opinion! [db]
+;  (fn [{:keys [parameters]}]
+;    (let [opinion-id (-> parameters :path :opinion-id)
+;          upvoted? (db/upvote-opinion! db opinion-id)]
+;      (if upvoted?
+;        (rr/response {:message "Success"})
+;        (rr/not-found {:type    :opinion-not-found
+;                       :message "Opinion not found!"})))))
+
 (defn vote-rating-design! [db]
   "Vote on a design with the voting style of 5 star rating"
   (fn [req]
@@ -211,5 +242,3 @@
         (rr/created (str responses/base-url "/designs/" design-id) {:designId design-id})
         {:status 500
          :body   {:message "Something went wrong. Please try again"}}))))
-
-

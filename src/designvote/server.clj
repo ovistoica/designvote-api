@@ -13,7 +13,8 @@
     (org.eclipse.jetty.server Server)
     (clojure.lang Keyword)
     (java.sql PreparedStatement Timestamp Date Time)
-    (org.postgresql.util PGobject)))
+    (org.postgresql.util PGobject)
+    (java.util UUID)))
 
 (defn app
   [env]
@@ -61,7 +62,13 @@
 (extend-protocol next.jdbc.prepare/SettableParameter
   Keyword
   (set-parameter [m ^PreparedStatement s i]
-    (.setObject s i (write-pg-keyword m))))
+    (.setObject s i (write-pg-keyword m)))
+  UUID
+  (set-parameter [m ^PreparedStatement s i]
+    (.setObject s i (doto (PGobject.)
+                      (.setType "text")
+                      (.setValue (str m))))))
+
 
 (extend-protocol next.jdbc.result-set/ReadableColumn
   ;

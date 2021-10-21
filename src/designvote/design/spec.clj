@@ -21,11 +21,12 @@
 
 
 (s/def ::version-id (s/with-gen str-uuid? str-uuid-gen))
-(s/def ::rating (s/and pos-int? #(< % 6)))
+(s/def ::rating #(and (< % 6)
+                      (> % 0)))
 
 
 (def ratings-map
   "Spec for file param created by ring.middleware.multipart-params.temp-file store."
   (st/spec
-    {:spec (s/map-of ::version-id ::rating)
+    {:spec         (s/map-of ::version-id ::rating)
      :swagger/type "ratings"}))

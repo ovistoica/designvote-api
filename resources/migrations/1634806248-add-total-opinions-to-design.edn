@@ -1,0 +1,4 @@
+{:up ["ALTER TABLE design
+        ADD COLUMN total_opinions int CHECK (total_opinions >= 0) DEFAULT 0;"]
+ :down ["ALTER TABLE design
+          DROP COLUMN total_opinions;"]}

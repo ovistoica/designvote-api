@@ -14,11 +14,13 @@
      [""
       {:middleware [[mw/wrap-auth0] [mw/wrap-kebab-case]]
        :post       {:handler    (design/create-design-with-versions! db)
-                    :parameters {:multipart {:versions   [multipart/temp-file-part]
-                                             :name       string?
-                                             :designType string?
-                                             :question   string?
-                                             :isPublic   string?}}
+                    :parameters {:multipart {:versions    [multipart/temp-file-part]
+                                             :name        string?
+                                             :designType  string?
+                                             :question    string?
+                                             :description string?
+                                             :voteStyle   string?
+                                             :isPublic    boolean?}}
                     :responses  {201 {:body {:designId string?}}}
                     :summary    "Create a design with design versions"}}]]))
 
@@ -56,7 +58,7 @@
 
      ["/:design-id"
       [""
-       {:middleware [[mw/wrap-auth0]]
+       {:middleware [[mw/wrap-auth0] [mw/wrap-authenticated]]
         :get        {:handler    (design/retrieve-design-by-id db)
                      :responses  {200 {:body responses/design}}
                      :parameters {:path {:design-id string?}}
@@ -107,7 +109,7 @@
                   :summary    "Delete a design version"}}]]
 
 
-      ["/vote" {:middleware [[mw/wrap-kebab-case]]}
+      ["/vote" {:middleware [[mw/wrap-auth0] [mw/wrap-authenticated]]}
        ["/rating"
         {:post {:handler    (design/vote-rating-design! db)
                 :parameters {:path {:design-id string?}
@@ -115,12 +117,13 @@
                 :responses  {201 {:body {:designId string?}}}
                 :summary    "Vote on a design with the voting style of 5 star rating"}}]
        ["/choose"
-        {:post {:handler    (design/vote-choose-best-design! db)
-                :parameters {:path {:design-id string?}
-                             :body {:designId design-spec/str-uuid?}}
-                :responses  {201 {:body {:designId string?}}}
-                :summary    "Vote on a design with the voting style of choose the best"}}]]
-      ["/opinion" {:middleware [[mw/wrap-auth0] [mw/wrap-kebab-case]]}
+        {:middleware [[mw/wrap-kebab-case]]
+         :post       {:handler    (design/vote-choose-best-design! db)
+                      :parameters {:path {:design-id uuid?}
+                                   :body {:versionId uuid?}}
+                      :responses  {201 {:body {:designId uuid?}}}
+                      :summary    "Vote on a design with the voting style of choose the best"}}]]
+      ["/opinion" {:middleware [[mw/wrap-auth0] [mw/wrap-authenticated] [mw/wrap-kebab-case]]}
        [""
         {:post {:summary    "Add an opinion on a design"
                 :handler    (design/add-opinion! db)
@@ -129,5 +132,19 @@
                 :responses  {201 {:body map?}
                              500 {:body map?}}}}]
        ["/:opinion-id"
-        {:delete {:summary "Delete an opinion"
-                  :handler (fn [req] (println))}}]]]]))
+        ["" {:middleware [[mw/wrap-opinion-owner]]}
+         {:put    {:summary    "Edit an opinion"
+                   :handler    (design/update-opinion! db)
+                   :parameters {:path {:design-id  string?
+                                       :opinion-id string?}
+                                :body {:opinion string?}}}
+          :delete {:summary    "Delete an opinion"
+                   :handler    (design/delete-opinion! db)
+                   :parameters {:path {:design-id  string?
+                                       :opinion-id string?}}}}]
+        #_["/thumbs-up"
+           {:post {:summary    "Upvote an opinion"
+                   :handler    (design/upvote-opinion! db)
+                   :parameters {:path {:design-id  string?
+                                       :opinion-id string?}}}}]]]]]))
+

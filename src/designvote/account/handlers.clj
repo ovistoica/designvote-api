@@ -72,3 +72,15 @@
           (rr/response {:account (u/->camelCase account)})
           (rr/not-found {:message "Account not found"}))))))
 
+
+(defn get-public-user
+  [db]
+  "Get public info about a user"
+  (fn [req]
+    (clojure.pprint/pprint req)
+    (let [user-id (-> req :parameters :path :user-id (u/decode-uri))
+          user (account-db/get-public-account db user-id)]
+      (if user
+        (rr/response user)
+        (rr/not-found {:message "Account not found"})))))
+
