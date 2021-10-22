@@ -8,17 +8,19 @@
   (:import java.util.UUID))
 
 
-(defn get-latest-designs-paginated
-  "Get latest design polls paginated by 10"
+(defn get-designs-paginated
+  "Get design polls paginated."
   [db]
   (fn [req]
-    (let [limit (-> req :parameters :query :limit)
-          offset (-> req :parameters :query :offset)
-          designs
-          (db/select-latest-designs db {:limit  limit
-                                        :offset offset})]
+    (let [{:keys [limit offset]} (-> req :parameters :query)
+          popular (-> (db/select-most-popular-designs db {:limit  limit
+                                                          :offset offset}))
 
-      (rr/response {:designs (map u/->camelCase designs)}))))
+          latest (db/select-latest-designs db {:limit  limit
+                                               :offset offset})]
+      (rr/response (u/->camelCase {:latest  latest
+                                   :popular popular})))))
+
 
 
 (defn list-all-user-designs

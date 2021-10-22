@@ -58,6 +58,8 @@
   (-> (app mock-req)
       (m/decode-response-body))
 
+  ((dh/get-designs-paginated db) {})
+
   (def designId "06a0f157-fbc7-42b1-a56e-fe34a3983531")
   (ddb/get-opinions-with-users2 db designId)
   (ddb/find-design-by-id db "b1bbf331-c23f-41ba-ae83-fc74dc1e2478")

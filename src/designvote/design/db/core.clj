@@ -100,6 +100,23 @@
                          (limit limit-by)
                          (h/format)))))
 
+(defn select-most-popular-designs
+  "Retrieves the most popular created public polls"
+  ([db]
+   (select-most-popular-designs db {}))
+  ([db {:keys [offset-by limit-by] :or {offset-by 0 limit-by 10}}]
+   (jdbc/execute! db (-> (select :design.*
+                                 [:account.picture :owner-picture]
+                                 [:account.name :owner-name]
+                                 [:account.nickname :owner-nickname])
+                         (from :design)
+                         (join :account [:= :design.uid :account.uid])
+                         (order-by [:total-votes :desc] [:total-opinions :desc])
+                         (offset offset-by)
+                         (limit limit-by)
+                         (h/format)))))
+
+
 (defn count-user-designs
   "Get number of designs created by the user.
   Useful for trial periods of users"

@@ -43,11 +43,13 @@
                                         :design-type string?
                                         :vote-style  string?}}
                     :summary    "Create a design"}}]
-     ["/latest"
-      {:get {:handler    (design/get-latest-designs-paginated db)
+     ["/paginated/q"
+      {:get {:handler    (design/get-designs-paginated db)
              :parameters {:query {(ds/opt :offset) int?
-                                  (ds/opt :limit)  int?}}
-             :responses  {200 {:body {:designs coll?}}}
+                                  (ds/opt :limit)  int?
+                                  (ds/opt :order) keyword?}}
+             :responses  {200 {:body {:latest coll?
+                                      :popular coll?}}}
              :summary    "Retrieve latest designs paginated. Useful for feed"}}]
      ["/vote/short"
       ["/:short-url"
