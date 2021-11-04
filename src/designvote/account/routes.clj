@@ -18,7 +18,7 @@
                 :parameters {:body {:email    string?
                                     :social   boolean?
                                     :uid      string?
-                                    :name     string?
+                                    :name     (s/nilable string?)
                                     :nickname string?
                                     :picture  string?
                                     :provider string?

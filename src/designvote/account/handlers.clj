@@ -33,6 +33,7 @@
     (let [body (-> request :parameters :body)
           user (dissoc body :token)
           token (:token body)]
+      (clojure.pprint/pprint body)
       (if (= token security-token)
         (do (let [stripe-id (get (pay/create-costumer user) :id)
                   created? (account-db/create-account! db (assoc user :stripe-id stripe-id))]
