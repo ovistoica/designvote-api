@@ -68,8 +68,8 @@
 
   (ddb/find-design-by-id db designId)
   (ddb/insert-opinion! db {:design-id designId
-                           :opinion "Asta e aia de increment doi"
-                           :uid google-user-id})
+                           :opinion   "Asta e aia de increment doi"
+                           :uid       google-user-id})
 
 
   (ddb/delete-design! db {:design-id "a195d905-d4fb-4892-8c00-a7856ebc8149"})
@@ -86,7 +86,8 @@
                                       :vote-style  "choose"
                                       :is-public   true}}))
 
-  (ddb/find-design-by-url db "f1e87c")
+  (ddb/delete-design! db (select-keys (ddb/find-design-by-url db "9fb912") [:design-id]))
+  (ddb/delete-design! db {:design-id "cfa03c60-9688-464b-b9bc-2b3f4d34a5f6"})
   (ddb/select-latest-designs db)
   (ddb/get-opinion db 126)
   (ddb/delete-opinion! db 126)
