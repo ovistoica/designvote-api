@@ -55,7 +55,7 @@ CREATE TABLE picture
 
 CREATE TABLE vote
 (
- vote_id   text NOT NULL PRIMARY KEY,
+ id   serial PRIMARY KEY,
  version_id text NOT NULL REFERENCES design_version (version_id) ON DELETE CASCADE,
  uid        text REFERENCES account (uid) ON DELETE SET NULL
 );

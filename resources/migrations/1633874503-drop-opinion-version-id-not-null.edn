@@ -1,0 +1,4 @@
+{:up ["ALTER TABLE opinion
+       ALTER COLUMN version_id DROP NOT NULL;"]
+ :down ["ALTER TABLE opinion
+          ALTER COLUMN version_ID SET NOT NULL;"]}

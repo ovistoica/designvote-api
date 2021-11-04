@@ -2,6 +2,7 @@
   (:require [designvote.middleware :as mw]
             [designvote.design.handlers :as design]
             [designvote.responses :as responses]
+            [designvote.design.spec :as design-spec]
             [spec-tools.data-spec :as ds]
             [clojure.spec.alpha :as s]
             [reitit.ring.middleware.multipart :as multipart]))
@@ -11,13 +12,15 @@
   (let [db (:jdbc-url env)]
     ["/designs" {:swagger {:tags ["designs V2"]}}
      [""
-      {:middleware [[mw/wrap-auth0]]
+      {:middleware [[mw/wrap-auth0] [mw/wrap-kebab-case]]
        :post       {:handler    (design/create-design-with-versions! db)
-                    :parameters {:multipart {:versions   [multipart/temp-file-part]
-                                             :name       string?
-                                             :designType string?
-                                             :question   string?
-                                             :isPublic   string?}}
+                    :parameters {:multipart {:versions    [multipart/temp-file-part]
+                                             :name        string?
+                                             :designType  string?
+                                             :question    string?
+                                             :description string?
+                                             :voteStyle   string?
+                                             :isPublic    boolean?}}
                     :responses  {201 {:body {:designId string?}}}
                     :summary    "Create a design with design versions"}}]]))
 
@@ -40,22 +43,24 @@
                                         :design-type string?
                                         :vote-style  string?}}
                     :summary    "Create a design"}}]
-     ["/latest"
-      {:get {:handler    (design/get-latest-designs-paginated db)
+     ["/paginated/q"
+      {:get {:handler    (design/get-designs-paginated db)
              :parameters {:query {(ds/opt :offset) int?
-                                  (ds/opt :limit)  int?}}
-             :responses  {200 {:body {:designs coll?}}}
+                                  (ds/opt :limit)  int?
+                                  (ds/opt :order) keyword?}}
+             :responses  {200 {:body {:latest coll?
+                                      :popular coll?}}}
              :summary    "Retrieve latest designs paginated. Useful for feed"}}]
      ["/vote/short"
       ["/:short-url"
        {:get {:handler    (design/find-design-by-url db)
-              :responses  {200 {:body responses/design}}
+              :responses  {200 {:body responses/camelCaseDesign}}
               :parameters {:path {:short-url string?}}
               :summary    "Retrieve design by short url"}}]]
 
      ["/:design-id"
       [""
-       {:middleware [[mw/wrap-auth0]]
+       {:middleware [[mw/wrap-auth0] [mw/wrap-authenticated]]
         :get        {:handler    (design/retrieve-design-by-id db)
                      :responses  {200 {:body responses/design}}
                      :parameters {:path {:design-id string?}}
@@ -83,14 +88,14 @@
                      :summary    "Publish a design to be ready for voting"}}]
 
 
-      ["/versions" {:middleware [[mw/wrap-auth0] [mw/wrap-design-owner db]]}
+      ["/versions" {:middleware [[mw/wrap-auth0] [mw/wrap-design-owner db] [mw/wrap-kebab-case]]}
        [""
         {:post   {:handler    (design/add-design-version! db)
                   :responses  {201 {:body {:version-id string?}}}
                   :parameters {:path {:design-id string?}
-                               :body {:name        string?
-                                      :pictures    vector?
-                                      :description (s/nilable string?)}}
+                               :body {:name                 string?
+                                      :imageUrl             string?
+                                      (ds/opt :description) string?}}
                   :summary    "Create a design version"}
          :put    {:handler    (design/update-design-version! db)
                   :responses  {204 {:body nil?}}
@@ -103,44 +108,45 @@
                   :responses  {204 {:body nil?}}
                   :parameters {:path {:design-id string?}
                                :body {:version-id string?}}
-                  :summary    "Delete a design version"}}]
-       ["/multiple"
-        {:post {:handler    (design/add-multiple-design-versions! db)
-                :response   {201 {:body {:design-id string?}}}
-                :parameters {:path {:design-id string?}
-                             :body {:versions [{:name        string?
-                                                :pictures    vector?
-                                                :description (s/nilable string?)}]}}
-                :summary    "Upload multiple design versions"}}]]
+                  :summary    "Delete a design version"}}]]
 
-      ["/feedback"
-       {:post {:summary    "Give feedback on a design (ratings and comments)"
-               :handler    (design/give-feedback! db)
-               :parameters {:path {:design-id string?}
-                            :body {:voter-name (s/nilable string?)
-                                   :ratings    vector?
-                                   :comments   vector?}}}}]
-      ["/votes"
-       {:post   {:handler    (design/vote-design! db)
-                 :parameters {:path {:design-id string?}
-                              :body {:vote-style string?
-                                     :version-id string?
-                                     :rating     (s/nilable number?)
-                                     :voter-id   string?}}
-                 :responses  {204 {:body nil?}}
-                 :summary    "Vote design version"}
-        :delete {:handler    (design/unvote-design! db)
-                 :parameters {:path {:design-id string?}
-                              :body {:version-id string?}}
-                 :responses  {204 {:body nil?}}
-                 :summary    "Unvote design version"}}]
-      ["/opinions"
-       {:post {:summary    "Add a opinion about a design version"
-               :handler    (design/add-opinion! db)
-               :parameters {:path {:design-id string?}
-                            :body {:version-id string?
-                                   :opinion    string?
-                                   :voter-id   string?}}
-               :responses  {204 {:body map?}
-                            500 {:body map?}}}}]]]))
+
+      ["/vote" {:middleware [[mw/wrap-auth0] [mw/wrap-authenticated]]}
+       ["/rating"
+        {:post {:handler    (design/vote-rating-design! db)
+                :parameters {:path {:design-id string?}
+                             :body {:ratings design-spec/ratings-map}}
+                :responses  {201 {:body {:designId string?}}}
+                :summary    "Vote on a design with the voting style of 5 star rating"}}]
+       ["/choose"
+        {:middleware [[mw/wrap-kebab-case]]
+         :post       {:handler    (design/vote-choose-best-design! db)
+                      :parameters {:path {:design-id uuid?}
+                                   :body {:versionId uuid?}}
+                      :responses  {201 {:body {:designId uuid?}}}
+                      :summary    "Vote on a design with the voting style of choose the best"}}]]
+      ["/opinion" {:middleware [[mw/wrap-auth0] [mw/wrap-authenticated] [mw/wrap-kebab-case]]}
+       [""
+        {:post {:summary    "Add an opinion on a design"
+                :handler    (design/add-opinion! db)
+                :parameters {:path {:design-id string?}
+                             :body {:opinion string?}}
+                :responses  {201 {:body map?}
+                             500 {:body map?}}}}]
+       ["/:opinion-id"
+        ["" {:middleware [[mw/wrap-opinion-owner]]}
+         {:put    {:summary    "Edit an opinion"
+                   :handler    (design/update-opinion! db)
+                   :parameters {:path {:design-id  string?
+                                       :opinion-id string?}
+                                :body {:opinion string?}}}
+          :delete {:summary    "Delete an opinion"
+                   :handler    (design/delete-opinion! db)
+                   :parameters {:path {:design-id  string?
+                                       :opinion-id string?}}}}]
+        #_["/thumbs-up"
+           {:post {:summary    "Upvote an opinion"
+                   :handler    (design/upvote-opinion! db)
+                   :parameters {:path {:design-id  string?
+                                       :opinion-id string?}}}}]]]]]))
 

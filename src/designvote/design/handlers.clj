@@ -1,24 +1,26 @@
 (ns designvote.design.handlers
   (:require [ring.util.response :as rr]
             [designvote.responses :as responses]
-            [designvote.design.db :as db]
+            [designvote.design.db.core :as db]
             [clojure.set :refer [rename-keys]]
             [designvote.design.core :as d]
             [designvote.util :as u])
   (:import java.util.UUID))
 
 
-(defn get-latest-designs-paginated
-  "Get latest design polls paginated by 10"
+(defn get-designs-paginated
+  "Get design polls paginated."
   [db]
   (fn [req]
-    (let [limit (-> req :parameters :query :limit)
-          offset (-> req :parameters :query :offset)
-          designs
-          (db/select-latest-designs db {:limit  limit
-                                        :offset offset})]
+    (let [{:keys [limit offset]} (-> req :parameters :query)
+          popular (-> (db/select-most-popular-designs db {:limit  limit
+                                                          :offset offset}))
 
-      (rr/response {:designs (map u/->camelCase designs)}))))
+          latest (db/select-latest-designs db {:limit  limit
+                                               :offset offset})]
+      (rr/response (u/->camelCase {:latest  latest
+                                   :popular popular})))))
+
 
 
 (defn list-all-user-designs
@@ -86,20 +88,6 @@
 
 
 
-(defn add-multiple-design-versions!
-  [db]
-  (fn [request]
-    (let [design-id (-> request :parameters :path :design-id)
-          req-versions (-> request :parameters :body :versions)
-          versions (into [] (map #(assoc % :design-id design-id
-                                           :version-id (str (UUID/randomUUID))) req-versions))
-          created? (db/insert-multiple-design-versions! db versions)]
-      (if created? (rr/created (str responses/base-url "/designs/" design-id)
-                               {:design-id design-id})
-                   {:status  500
-                    :headers {}
-                    :body    {:message "Something went wrong. Please try again"}}))))
-
 (defn create-design-with-versions! [db]
   "Insert a new design along with its versions in the DB.
 
@@ -111,16 +99,18 @@
           uid (-> req :claims :sub)
           v-files (map :tempfile (:versions mp))
           design-id (u/uuid-str)
+          short-url (d/generate-short-url design-id)
           {:keys [img-url version-urls]} (d/upload-design-media! v-files design-id)
           extra-keys {:design-id design-id
                       :uid       uid
                       :img       img-url
-                      :short-url (d/generate-short-url design-id)}
+                      :short-url short-url}
 
           created? (db/insert-full-design! db (merge design extra-keys) version-urls)]
       (if created?
         (rr/created (str responses/base-url "/designs/" design-id)
-                    {:designId design-id})
+                    {:designId design-id
+                     :shortUrl short-url})
         {:status 500
          :body   {:message "Something went wrong. Please try again"}}))))
 
@@ -129,7 +119,7 @@
 (defn add-design-version!
   [db]
   (fn [request]
-    (let [version-id (str (UUID/randomUUID))
+    (let [version-id (u/uuid-str)
           design-id (-> request :parameters :path :design-id)
           version (-> request :parameters :body)
           created? (db/insert-design-version! db (assoc version :design-id design-id
@@ -158,39 +148,6 @@
         (rr/bad-request {:version-id version-id})))))
 
 
-(defn vote-design!
-  [db]
-  (fn [request]
-    (let [design-id (-> request :parameters :path :design-id)
-          {:keys [voter-id version-id rating vote-style]} (-> request :parameters :body)
-          vote-id (str (UUID/randomUUID))]
-      (if (= vote-style "five-star")
-        (db/rate-vote-design-version! db {:vote-id    vote-id
-                                          :uid        voter-id
-                                          :rating     rating
-                                          :version-id version-id
-                                          :design-id  design-id})
-        (db/choose-vote-design-version! db {:vote-id    vote-id
-                                            :uid        voter-id
-                                            :version-id version-id
-                                            :design-id  design-id}))
-
-      (rr/created (str responses/base-url "/designs/" design-id) {:design-id  design-id
-                                                                  :version-id version-id
-                                                                  :vote-id    vote-id}))))
-
-(defn unvote-design!
-  [db]
-  (fn [request]
-    (let [vote (-> request :parameters :body)
-          design-id (-> request :parameters :path :design-id)
-          deleted? (db/unvote-design-version! db (assoc vote :design-id design-id))]
-      (if deleted?
-        (rr/status 204)
-        (rr/bad-request {:vote-id (:vote-id vote)})))))
-
-
-;TODO Retrieve the whole design or at least the short URL
 (defn publish-design!
   "Generate public-url for a design and make public true.
   This happens when a user is ready to share his design to voters"
@@ -210,27 +167,80 @@
   (fn [request]
     (let [short-url (-> request :parameters :path :short-url)]
       (if-let [design (db/find-design-by-url db short-url)]
-        (rr/response design)
+        (do
+
+          (rr/response (u/->camelCase design)))
         (rr/not-found {:type    "design-not-found"
                        :message "Design not found"
                        :data    (str "short-url" short-url)})))))
 
 (defn add-opinion! [db]
-  (fn [{:keys [parameters]}]
-    (let [design-id (-> parameters :path :design-id)
+  "Add an opinion on a design"
+  (fn [{:keys [parameters claims]}]
+    (let [uid (-> claims :sub)
+          design-id (-> parameters :path :design-id)
           body (:body parameters)
           opinion (-> body
-                      (assoc :design-id design-id)
-                      (rename-keys {:voter-id :uid}))]
+                      (assoc :design-id design-id
+                             :uid uid))]
       (if-let [opinion (db/insert-opinion! db opinion)]
         (rr/created (str responses/base-url "/designs/" design-id) opinion)
         (rr/not-found {:type    "design-not-found"
                        :message "design not found"})))))
 
-(defn give-feedback! [db]
+(defn update-opinion! [db]
   (fn [{:keys [parameters]}]
-    (let [body (:body parameters)
-          design-id (-> parameters :path :design-id)]
-      (db/insert-feedback! db (assoc body :design-id design-id))
-      (rr/created (str responses/base-url "/designs/" design-id)))))
+    (let [opinion-id (-> parameters :path :opinion-id)
+          opinion (-> parameters :body :opinion)
+          updated? (db/update-opinion! db opinion opinion-id)]
+      (if updated?
+        (rr/response {:message "Updated opinion"})
+        (rr/not-found {:type    :opinion-not-found
+                       :message "Opinion not found!"})))))
 
+(defn delete-opinion! [db]
+  (fn [{:keys [parameters]}]
+    (let [design-id (-> parameters :path :design-id)
+          opinion-id (-> parameters :path :opinion-id)
+          deleted? (db/delete-opinion! db design-id opinion-id)]
+      (if deleted?
+        (rr/response {:message "Deleted opinion"})
+        (rr/not-found {:type    :opinion-not-found
+                       :message "Opinion not found!"})))))
+
+;(defn upvote-opinion! [db]
+;  (fn [{:keys [parameters]}]
+;    (let [opinion-id (-> parameters :path :opinion-id)
+;          upvoted? (db/upvote-opinion! db opinion-id)]
+;      (if upvoted?
+;        (rr/response {:message "Success"})
+;        (rr/not-found {:type    :opinion-not-found
+;                       :message "Opinion not found!"})))))
+
+(defn vote-rating-design! [db]
+  "Vote on a design with the voting style of 5 star rating"
+  (fn [req]
+    (let [uid (-> req :claims :sub)
+          design-id (-> req :parameters :path :design-id)
+          ratings (-> req :parameters :body :ratings)
+          inserted? (db/insert-ratings! db {:design-id design-id
+                                            :uid       uid
+                                            :ratings   ratings})]
+      (if inserted?
+        (rr/created (str responses/base-url "/designs/" design-id) {:designId design-id})
+        {:status 500
+         :body   {:message "Something went wrong. Please try again"}}))))
+
+(defn vote-choose-best-design! [db]
+  "Vote on a design with the voting style of choose the best"
+  (fn [req]
+    (let [uid (-> req :claims :sub)
+          design-id (-> req :parameters :path :design-id)
+          version-id (-> req :parameters :body :version-id)
+          inserted? (db/insert-vote! db {:design-id  design-id
+                                         :uid        uid
+                                         :version-id version-id})]
+      (if inserted?
+        (rr/created (str responses/base-url "/designs/" design-id) {:designId design-id})
+        {:status 500
+         :body   {:message "Something went wrong. Please try again"}}))))

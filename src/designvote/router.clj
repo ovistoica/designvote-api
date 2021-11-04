@@ -33,7 +33,7 @@
 
 (def router-config
   {:validate                    rs/validate
-   :reitit.middleware/transform dev/print-request-diffs     ;; This is for debugging purposes
+   ;:reitit.middleware/transform dev/print-request-diffs     ;; This is for debugging purposes
    :exception                   pretty/exception
    :conflicts                   (fn [conflicts]
                                   (println (r-exception/format-exception :path-conflicts nil conflicts)))
@@ -48,7 +48,7 @@
                                               ;; encoding response body
                                               muuntaja/format-response-middleware
                                               ;; exception handling
-                                              exception/exception-middleware
+                                              mw/exception-middleware
                                               ;; decoding request body
                                               muuntaja/format-request-middleware
                                               ;; coercing response bodys
@@ -56,9 +56,8 @@
                                               ;; coercing request parameters
                                               coercion/coerce-request-middleware
                                               ;; multipart
-                                              multipart/multipart-middleware
-                                              ;; convert all parameters to kebab-case
-                                              mw/wrap-kebab-case]}})
+                                              multipart/multipart-middleware]}})
+
 
 (defn cors-middleware
   "Middleware to allow different origins"

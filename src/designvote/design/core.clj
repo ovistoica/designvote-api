@@ -1,5 +1,5 @@
 (ns designvote.design.core
-  (:require [designvote.design.db :as db]
+  (:require [designvote.design.db.core :as db]
             [designvote.account.db :as account-db]
             [designvote.media.core :as m]
             [designvote.payment.core :as stripe]
@@ -33,16 +33,16 @@
 
 
 (defn upload-design-media! [files design-id]
-    (let [[img1 img2] (into [] (take 2 files))
-          thumbnail (create-design-thumbnail img1 img2)
-          img (aws/upload-image! thumbnail (str design-id ".jpeg"))
-          v-col (into [] (map-indexed (fn [idx file]
-                                        {:name (str (inc idx) ".jpeg")
-                                         :img  (m/buffered-image file)}) files))
-          version-urls
-          (into [] (map #(aws/upload-image! (:img %) (str design-id "-" (:name %))) v-col))]
-      {:img-url img
-       :version-urls version-urls}))
+  (let [[img1 img2] (into [] (take 2 files))
+        thumbnail (create-design-thumbnail img1 img2)
+        img (aws/upload-image! thumbnail (str design-id ".jpeg"))
+        v-col (into [] (map-indexed (fn [idx file]
+                                      {:name (str (inc idx) ".jpeg")
+                                       :img  (m/buffered-image file)}) files))
+        version-urls
+        (into [] (map #(aws/upload-image! (:img %) (str design-id "-" (:name %))) v-col))]
+    {:img-url      img
+     :version-urls version-urls}))
 
 
 

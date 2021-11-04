@@ -6,7 +6,8 @@
   (:import (java.io StringWriter)
            (java.util UUID)
            (clojure.lang Keyword)
-           (java.time ZoneId)))
+           (java.time ZoneId)
+           (java.net URLDecoder)))
 
 
 (defn pprint-to-str
@@ -47,3 +48,7 @@
       (.toLocalDateTime)
       (.atZone (ZoneId/systemDefault))
       (java-date)))
+
+(defn decode-uri
+  [uri]
+  (URLDecoder/decode uri))
