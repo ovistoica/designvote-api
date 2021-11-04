@@ -60,6 +60,7 @@
        ;; print stack-traces for all exceptions
        ::exception/wrap    (fn [handler e request]
                              (println "ERROR" (pr-str (:uri request)))
+                             (clojure.pprint/pprint e)
                              (handler e request))})))
 
 (def wrap-design-owner
