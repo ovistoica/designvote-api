@@ -20,7 +20,7 @@
                                     :uid      string?
                                     :name     string?
                                     :nickname string?
-                                    :picture  [string?]
+                                    :picture  string?
                                     :provider string?
                                     :token    string?}}
                 :summary    "Create an account"}
