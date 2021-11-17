@@ -32,7 +32,7 @@
      [""
       {:middleware [[mw/wrap-auth0]]
        :get        {:handler   (design/list-all-user-designs db)
-                    :responses {200 {:body responses/designs}}
+                    :responses {200 {:body vector?}}
                     :summary   "Get all designs"}
        :post       {:handler    (design/create-design! db)
                     :responses  {201 {:body {:design-id string?}}}
@@ -47,8 +47,8 @@
       {:get {:handler    (design/get-designs-paginated db)
              :parameters {:query {(ds/opt :offset) int?
                                   (ds/opt :limit)  int?
-                                  (ds/opt :order) keyword?}}
-             :responses  {200 {:body {:latest coll?
+                                  (ds/opt :order)  keyword?}}
+             :responses  {200 {:body {:latest  coll?
                                       :popular coll?}}}
              :summary    "Retrieve latest designs paginated. Useful for feed"}}]
      ["/vote/short"

@@ -16,8 +16,7 @@
             [ragtime.repl :as repl]
             [designvote.payment.core :as p]
             [ring.mock.request :as mock]
-            [muuntaja.core :as m])
-  (:import (java.net URLDecoder)))
+            [muuntaja.core :as m]))
 
 
 (ig-repl/set-prep!
@@ -60,6 +59,8 @@
 
   ((dh/get-designs-paginated db) {})
 
+  ()
+
   (def designId "06a0f157-fbc7-42b1-a56e-fe34a3983531")
   (ddb/get-opinions-with-users2 db designId)
   (ddb/find-design-by-id db "b1bbf331-c23f-41ba-ae83-fc74dc1e2478")
@@ -86,8 +87,13 @@
                                       :vote-style  "choose"
                                       :is-public   true}}))
 
-  (ddb/delete-design! db (select-keys (ddb/find-design-by-url db "9fb912") [:design-id]))
-  (ddb/delete-design! db {:design-id "cfa03c60-9688-464b-b9bc-2b3f4d34a5f6"})
+  (ddb/find-design-by-url db "eeca59")
+  (adb/get-public-account db "google-oauth2|110670785301687867257")
+  (adb/get-account db "google-oauth2|110670785301687867257")
+  (sql/find-by-keys db :account {:uid "google-oauth2|110670785301687867257"})
+
+  (ddb/delete-design! db (select-keys (ddb/find-design-by-url db "5190c2") [:design-id]))
+  (ddb/delete-design! db {:design-id "hello2"})
   (ddb/select-latest-designs db)
   (ddb/get-opinion db 126)
   (ddb/delete-opinion! db 126)
@@ -120,7 +126,8 @@
   (adb/get-public-account db "facebook|5841010855939759")
 
 
-  (adb/update-account! db {:uid "facebook|5841010855939759"} {:subscription-status :trialing}))
+  (adb/update-account! db {:uid "facebook|5841010855939759"} {:subscription-status :trialing})
+  (adb/update-account! db {:uid "auth0|6183b1b8fb8291006fc2adae"} {:name "Kaylee Spencer"}))
 
 
 

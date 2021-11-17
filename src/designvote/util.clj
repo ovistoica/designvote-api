@@ -51,4 +51,4 @@
 
 (defn decode-uri
   [uri]
-  (URLDecoder/decode uri))
+  (URLDecoder/decode uri nil))

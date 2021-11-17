@@ -1,13 +1,11 @@
 (ns designvote.server
-  (:require [reitit.ring :as ring]
-            [ring.adapter.jetty :as jetty]
+  (:require [ring.adapter.jetty :as jetty]
             [integrant.core :as ig]
             [environ.core :refer [env]]
             [designvote.router :as router]
             [next.jdbc :as jdbc]
             [next.jdbc.connection :as njc]
-            [designvote.util :as u]
-            [camel-snake-kebab.core :as csk])
+            [designvote.util :as u])
   (:import
     (com.zaxxer.hikari HikariDataSource)
     (org.eclipse.jetty.server Server)

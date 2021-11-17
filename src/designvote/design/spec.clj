@@ -1,8 +1,7 @@
 (ns designvote.design.spec
   (:require [clojure.spec.alpha :as s]
             [spec-tools.core :as st]
-            [clojure.spec.gen.alpha :as gen]
-            [designvote.util :as u]))
+            [clojure.spec.gen.alpha :as gen]))
 
 (def uuid-regex (re-pattern "^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$"))
 

@@ -23,12 +23,13 @@
 
 
 
+
 (defn list-all-user-designs
   "Get all designs for the user from database"
   [db]
   (fn [request]
     (let [uid (-> request :claims :sub)
-          designs (db/find-all-user-designs db uid)]
+          designs (u/->camelCase (db/find-all-user-designs db uid))]
       (rr/response designs))))
 
 (defn create-design!

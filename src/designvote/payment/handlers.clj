@@ -61,10 +61,10 @@
       ; Verify signature from stripe
       (try
         (Webhook/constructEvent payload sig-header p/signing-secret)
-        (catch SignatureVerificationException e
+        (catch SignatureVerificationException _
           {:status 400
            :body   {:message "Invalid request"}})
-        (catch JsonSyntaxException e
+        (catch JsonSyntaxException _
           {:status 400
            :body   {:message "Invalid body sent"}}))
 

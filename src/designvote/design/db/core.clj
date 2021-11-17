@@ -8,9 +8,21 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Design queries ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+#_(defn find-all-user-designs
+    [db uid]
+    (sql/find-by-keys db :design {:uid uid}))
+
 (defn find-all-user-designs
   [db uid]
-  (sql/find-by-keys db :design {:uid uid}))
+  (jdbc/execute! db (-> (select :design.*
+                                [:account.picture :owner-picture]
+                                [:account.name :owner-name]
+                                [:account.nickname :owner-nickname])
+                        (from :design)
+                        (join :account [:= :design.uid :account.uid])
+                        (where [:= :design.uid uid])
+                        (order-by [:created-at :desc])
+                        (h/format))))
 
 
 (defn insert-design!

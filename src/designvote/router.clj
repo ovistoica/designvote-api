@@ -8,7 +8,6 @@
             [reitit.ring.middleware.multipart :as multipart]
             [reitit.coercion.spec :as coercion-spec]
             [reitit.ring.coercion :as coercion]
-            [reitit.ring.middleware.exception :as exception]
             [reitit.dev.pretty :as pretty]
             [reitit.ring.spec :as rs]
             [reitit.ring.middleware.dev :as dev]
@@ -51,7 +50,7 @@
                                               mw/exception-middleware
                                               ;; decoding request body
                                               muuntaja/format-request-middleware
-                                              ;; coercing response bodys
+                                              ;; coercing response bodies
                                               coercion/coerce-response-middleware
                                               ;; coercing request parameters
                                               coercion/coerce-request-middleware
@@ -80,6 +79,6 @@
       router-config)
     (ring/routes
       (swagger-ui/create-swagger-ui-handler {:path "/"})
-      ; Finally if nothing matches, return 404
+      ; Finally, if nothing matches, return 404
       (constantly {:status 404, :body ""}))
     {:middleware [cors-middleware]}))

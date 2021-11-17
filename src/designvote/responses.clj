@@ -1,7 +1,6 @@
 (ns designvote.responses
   (:require [spec-tools.data-spec :as ds]
-            [clojure.spec.alpha :as s]
-            [designvote.util :as u]))
+            [clojure.spec.alpha :as s]))
 
 (def base-url "https://designvote.io")
 

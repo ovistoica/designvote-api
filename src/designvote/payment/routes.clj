@@ -1,6 +1,5 @@
 (ns designvote.payment.routes
   (:require [designvote.payment.handlers :as h]
-            [clojure.spec.alpha :as s]
             [designvote.middleware :as mw]))
 
 (defn routes

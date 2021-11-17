@@ -3,7 +3,6 @@
             [reitit.ring.middleware.exception :as exception]
             [clojure.pprint :as pp]
             [ring.util.response :as rr]
-            [next.jdbc.sql :as sql]
             [designvote.design.db.core :as design-db]
             [designvote.util :as u])
   (:import (java.sql SQLException)))
