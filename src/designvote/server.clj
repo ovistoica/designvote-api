@@ -52,7 +52,7 @@
   [_ config]
   (.close ^HikariDataSource (:connectable config)))
 
-(defn  write-pg-keyword [^Keyword kw]
+(defn write-pg-keyword [^Keyword kw]
   (doto (PGobject.)
     (.setType "text")
     (.setValue (u/keyword->sql-text kw))))
@@ -69,7 +69,6 @@
 
 
 (extend-protocol next.jdbc.result-set/ReadableColumn
-  ;
   Timestamp
   (read-column-by-label [^Timestamp v _]
     (u/sql-timestamp->inst v))

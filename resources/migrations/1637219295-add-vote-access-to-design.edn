@@ -1,0 +1,4 @@
+{:up   ["ALTER TABLE design
+        ADD COLUMN vote_access text NOT NULL DEFAULT 'anonymous'"]
+ :down ["ALTER TABLE design
+          DROP COLUMN vote_access;"]}

@@ -63,7 +63,7 @@
 
   (def designId "06a0f157-fbc7-42b1-a56e-fe34a3983531")
   (ddb/get-opinions-with-users2 db designId)
-  (ddb/find-design-by-id db "b1bbf331-c23f-41ba-ae83-fc74dc1e2478")
+  (ddb/find-design-by-id db designId)
 
   (ddb/update-design-votes-opinions! db designId :total-votes :+)
 
@@ -92,7 +92,7 @@
   (adb/get-account db "google-oauth2|110670785301687867257")
   (sql/find-by-keys db :account {:uid "google-oauth2|110670785301687867257"})
 
-  (ddb/delete-design! db (select-keys (ddb/find-design-by-url db "5190c2") [:design-id]))
+  (ddb/delete-design! db (select-keys (ddb/find-design-by-url db "69ba02") [:design-id]))
   (ddb/delete-design! db {:design-id "hello2"})
   (ddb/select-latest-designs db)
   (ddb/get-opinion db 126)

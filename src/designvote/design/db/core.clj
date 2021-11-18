@@ -182,11 +182,12 @@
 
 
 
-(defn- build-ratings [ratings design-id uid]
+(defn- build-ratings [ratings voter-name design-id uid]
   "Normalize kv ratings to insert in db"
   (into [] (for [[k v] ratings] {:version-id (name k)
                                  :rating     v
                                  :uid        uid
+                                 :voter-name (or voter-name nil)
                                  :design-id  design-id})))
 
 
@@ -236,15 +237,16 @@
     (update-design-version-votes! tx (:version-id vote-map) :+)))
 
 
-(defn insert-ratings! [db {:keys [design-id ratings uid]}]
+(defn insert-ratings! [db {:keys [design-id ratings voter-name uid]}]
   "Insert 5-star ratings for a design.
 
    Parameters:
    :design-id     The id of the design to insert ratings for
    :uid           The id of the user who voted
    :rating        A map with the version id as a key and a rating (1-5) as value"
-  (let [db-ratings (build-ratings ratings design-id uid)
-        rating-cols [:version-id :design-id :uid :rating]]
+  (let [db-ratings (build-ratings ratings voter-name design-id uid)
+        rating-cols [:version-id :design-id :uid :rating :voter-name]]
+    (clojure.pprint/pprint db-ratings)
     (jdbc/with-transaction [tx db]
       (update-design-votes-opinions! tx design-id :total-votes :+)
       (-> (sql/insert-multi! tx :vote rating-cols

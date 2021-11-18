@@ -218,30 +218,51 @@
 ;        (rr/not-found {:type    :opinion-not-found
 ;                       :message "Opinion not found!"})))))
 
+(defn- reject-unauthenticated-vote []
+  (-> (rr/response {:message "Owner only allows authenticated voting"
+                    :type    :authorization-required})
+      (rr/status 401)))
+
+
 (defn vote-rating-design! [db]
   "Vote on a design with the voting style of 5 star rating"
   (fn [req]
     (let [uid (-> req :claims :sub)
           design-id (-> req :parameters :path :design-id)
-          ratings (-> req :parameters :body :ratings)
-          inserted? (db/insert-ratings! db {:design-id design-id
-                                            :uid       uid
-                                            :ratings   ratings})]
-      (if inserted?
-        (rr/created (str responses/base-url "/designs/" design-id) {:designId design-id})
-        {:status 500
-         :body   {:message "Something went wrong. Please try again"}}))))
+          ratings (get-in req [:parameters :body :ratings])
+          {:keys [voter-name vote-access]} (-> req
+                                               :parameters :body :ratings
+                                               (u/->kebab-case))
+          not-allowed? (and (= vote-access "logged-in")
+                            (not uid))]
+      (if not-allowed?
+        (reject-unauthenticated-vote)
+        (if-let [inserted? (db/insert-ratings! db {:design-id  design-id
+                                                   :uid        (or uid nil)
+                                                   :voter-name (or voter-name nil)
+                                                   :ratings    ratings})]
+          (rr/created (str responses/base-url "/designs/" design-id) {:designId design-id})
+          {:status 500
+           :body   {:message "Something went wrong. Please try again"}})))))
 
 (defn vote-choose-best-design! [db]
   "Vote on a design with the voting style of choose the best"
   (fn [req]
     (let [uid (-> req :claims :sub)
           design-id (-> req :parameters :path :design-id)
-          version-id (-> req :parameters :body :version-id)
-          inserted? (db/insert-vote! db {:design-id  design-id
-                                         :uid        uid
-                                         :version-id version-id})]
-      (if inserted?
-        (rr/created (str responses/base-url "/designs/" design-id) {:designId design-id})
-        {:status 500
-         :body   {:message "Something went wrong. Please try again"}}))))
+          {:keys [version-id voter-name vote-access]} (-> req :parameters :body)
+          not-allowed? (and (= vote-access "logged-in")
+                            (not uid))]
+      (if not-allowed?
+        (reject-unauthenticated-vote)
+        (if-let [inserted? (db/insert-vote! db {:design-id  design-id
+                                                :uid        (or uid nil)
+                                                :voter-name (or voter-name nil)
+                                                :version-id version-id})]
+          (rr/created (str responses/base-url "/designs/" design-id)
+                      {:designId design-id})
+          {:status 500
+           :body   {:message "Something went wrong. Please try again"}})))))
+
+
+

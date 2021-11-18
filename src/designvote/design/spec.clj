@@ -18,11 +18,10 @@
 (s/def ::name string?)
 (s/def ::question string?)
 
-
 (s/def ::version-id (s/with-gen str-uuid? str-uuid-gen))
+
 (s/def ::rating #(and (< % 6)
                       (> % 0)))
-
 
 (def ratings-map
   "Spec for file param created by ring.middleware.multipart-params.temp-file store."
