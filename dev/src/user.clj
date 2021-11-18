@@ -72,6 +72,9 @@
                            :opinion   "Asta e aia de increment doi"
                            :uid       google-user-id})
 
+  (ddb/update-design! db {:design-id   "06a0f157-fbc7-42b1-a56e-fe34a3983531"
+                          :total-votes 0})
+
 
   (ddb/delete-design! db {:design-id "a195d905-d4fb-4892-8c00-a7856ebc8149"})
 
@@ -87,12 +90,12 @@
                                       :vote-style  "choose"
                                       :is-public   true}}))
 
-  (ddb/find-design-by-url db "eeca59")
+  (ddb/find-design-by-url db "a8b8b7")
   (adb/get-public-account db "google-oauth2|110670785301687867257")
   (adb/get-account db "google-oauth2|110670785301687867257")
   (sql/find-by-keys db :account {:uid "google-oauth2|110670785301687867257"})
 
-  (ddb/delete-design! db (select-keys (ddb/find-design-by-url db "69ba02") [:design-id]))
+  (ddb/delete-design! db (select-keys (ddb/find-design-by-url db "066fa1") [:design-id]))
   (ddb/delete-design! db {:design-id "hello2"})
   (ddb/select-latest-designs db)
   (ddb/get-opinion db 126)

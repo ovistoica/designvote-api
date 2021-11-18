@@ -121,14 +121,15 @@
                                     (ds/opt :voterName) string?}}
                 :responses  {201 {:body {:designId string?}}}
                 :summary    "Vote on a design with the voting style of 5 star rating"}}]
-       ["/choose" {:middleware [[mw/wrap-kebab-case]]}
-        {:post {:handler    (design/vote-choose-best-design! db)
-                :parameters {:path {:design-id uuid?}
-                             :body {:versionId          uuid?
-                                    (ds/opt :voterName) string?
-                                    :voteAccess         string?}}
-                :responses  {201 {:body {:designId uuid?}}}
-                :summary    "Vote on a design with the voting style of choose the best"}}]]
+       ["/choose"
+        {:middleware [[mw/wrap-kebab-case]]
+         :post       {:handler    (design/vote-choose-best-design! db)
+                      :parameters {:path {:design-id uuid?}
+                                   :body {:versionId          uuid?
+                                          (ds/opt :voterName) string?
+                                          :voteAccess         string?}}
+                      :responses  {201 {:body {:designId uuid?}}}
+                      :summary    "Vote on a design with the voting style of choose the best"}}]]
       ["/opinion" {:middleware [[mw/wrap-auth0] [mw/wrap-authenticated] [mw/wrap-kebab-case]]}
        [""
         {:post {:summary    "Add an opinion on a design"
