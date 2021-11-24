@@ -70,7 +70,7 @@
   (do-stripe-request http/post endpoint {:form-params body}))
 
 
-(defn create-subscription
+(defn create-subscription!
   [{:keys [customer-id price-id]}]
   (POST :subscriptions {:customer         customer-id
                         :payment_behavior "default_incomplete"
@@ -82,7 +82,7 @@
   (GET :subscriptions {:customer customer-id}))
 
 
-(defn create-costumer
+(defn create-costumer!
   "Create a new customer inside the Stripe dashboard"
   [{:keys [email name uid]}]
   (POST :customers {:name           name
@@ -113,9 +113,9 @@
 
 (defn add-stripe-id-to-user!
   [db {:keys [uid name email]}]
-  (let [stripe-id (:id (create-costumer {:email email
-                                         :name  name
-                                         :uid   uid}))
+  (let [stripe-id (:id (create-costumer! {:email email
+                                          :name  name
+                                          :uid   uid}))
         updated? (-> (user-db/update-account! db {:uid uid} {:stripe-id stripe-id})
                      :next.jdbc/update-count
                      (pos?))]

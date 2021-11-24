@@ -58,6 +58,7 @@
       (m/decode-response-body))
 
   ((dh/get-designs-paginated db) {})
+  (adb/get-account db "google-oauth2|111527032405403395061")
 
   ()
 
@@ -93,13 +94,16 @@
   (ddb/find-design-by-url db "a8b8b7")
   (adb/get-public-account db "google-oauth2|110670785301687867257")
   (adb/get-account db "google-oauth2|110670785301687867257")
+  (adb/get-account db "google-oauth2|114534779402846068340")
+  (adb/delete-account! db {:uid "google-oauth2|114534779402846068340"})
   (sql/find-by-keys db :account {:uid "google-oauth2|110670785301687867257"})
 
-  (ddb/delete-design! db (select-keys (ddb/find-design-by-url db "066fa1") [:design-id]))
+  (ddb/delete-design! db (select-keys (ddb/find-design-by-url db "9c6cae") [:design-id]))
   (ddb/delete-design! db {:design-id "hello2"})
   (ddb/select-latest-designs db)
   (ddb/get-opinion db 126)
   (ddb/delete-opinion! db 126)
+
   (ddb/update-design! db {:design-id   "54afe9d9-18e4-4cfc-89a6-421525186d36"
                           :total-votes 6})
   (ddb/find-design-by-id db mock-design-id)

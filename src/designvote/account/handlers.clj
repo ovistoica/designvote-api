@@ -6,7 +6,8 @@
             [designvote.payment.core :as pay]
             [muuntaja.core :as m]
             [designvote.util :as u]
-            [designvote.responses :as responses]))
+            [designvote.responses :as responses]
+            [designvote.email :as email]))
 
 
 (defonce ^:private security-token "VIZFDFAlCzwze9g")
@@ -35,9 +36,10 @@
           token (:token body)]
       (clojure.pprint/pprint body)
       (if (= token security-token)
-        (do (let [stripe-id (get (pay/create-costumer user) :id)
+        (do (let [stripe-id (get (pay/create-costumer! user) :id)
                   created? (account-db/create-account! db (assoc user :stripe-id stripe-id))]
               (when created?
+                (email/add-contact-to-mailing-list! user)
                 (rr/created (str responses/base-url "/accounts/" (:uid user)) user))))
         {:status  401
          :headers {}
