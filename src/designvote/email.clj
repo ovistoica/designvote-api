@@ -38,6 +38,7 @@
       (.setUpdateEnabled false))))
 
 
+
 (defn add-contact-to-mailing-list! [auth0-contact]
   (set-api-key! (:email-api-key config))
   (let [api (ContactsApi.)
