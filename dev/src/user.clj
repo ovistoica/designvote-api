@@ -95,7 +95,7 @@
   (adb/get-public-account db "google-oauth2|110670785301687867257")
   (adb/get-account db "google-oauth2|110670785301687867257")
   (adb/get-account db "google-oauth2|114534779402846068340")
-  (adb/delete-account! db {:uid "google-oauth2|114534779402846068340"})
+  (adb/delete-account! db {:email "ovidiu@designvote.io"})
   (sql/find-by-keys db :account {:uid "google-oauth2|110670785301687867257"})
 
   (ddb/delete-design! db (select-keys (ddb/find-design-by-url db "9c6cae") [:design-id]))

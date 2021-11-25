@@ -4,17 +4,15 @@
             [designvote.account.db :as user-db]
             [designvote.util :as u]
             [designvote.config :refer [config]]
-            [clojure.tools.logging :as log]))
+            [clojure.tools.logging :as log]
+            [designvote.http :refer [handle-response]]))
 
 (def ^:private ^String token (:stripe-secret config))
 (def ^:private ^String stripe-api-base-url "https://api.stripe.com/v1")
 
-(def  ^String monthly-plan (:monthly-plan config))
-(def  ^String yearly-plan (:yearly-plan config))
-(def  ^String signing-secret (:stripe-signing-secret config))
-
-(def subscription-status #{:trialing :active :past_due :canceled :unpaid})
-
+(def ^String monthly-plan (:monthly-plan config))
+(def ^String yearly-plan (:yearly-plan config))
+(def ^String signing-secret (:stripe-signing-secret config))
 
 (defn- handle-error [body]
   (let [invalid-token? (= (get-in body [:error :type]) "invalid_auth")
@@ -30,12 +28,6 @@
     (log/warn (u/pprint-to-str error))
     (throw (ex-info message error))))
 
-(defn handle-response [{:keys [status] :as response}]
-  (let [body (m/decode-response-body response)]
-    (if (< status 300)
-      (assoc body :status status)
-      (handle-error (assoc body :status status)))))
-
 
 (defn- do-stripe-request [request-fn endpoint config]
   (let [token (or (get-in config [:query-params :token])
@@ -43,7 +35,7 @@
                   token)]
     (when token
       (let [url (str stripe-api-base-url "/" (name endpoint))
-            _ (log/trace "Slack API request: %s %s" (pr-str url) (pr-str config))
+            _ (log/trace "Stripe API request: %s %s" (pr-str url) (pr-str config))
             request (merge-with merge
                                 {:headers          {"Authorization" (str "Bearer " token)}
                                  :throw-exceptions false
@@ -53,7 +45,7 @@
                                  :socket-timeout   10000}
                                 config)]
         (try
-          (handle-response (request-fn url request))
+          (handle-response (request-fn url request) handle-error)
           (catch Throwable e
             (throw (ex-info (.getMessage e) (merge (ex-data e) {:url url, :request request}) e))))))))
 
