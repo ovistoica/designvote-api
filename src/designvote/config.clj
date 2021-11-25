@@ -11,6 +11,7 @@
                      "AWS_SECRET_KEY"
                      "AWS_S3_ENDPOINT"
                      "AWS_S3_BUCKET_NAME"
+                     "EMAIL_API_KEY"
                      "DO_CDN_ENDPOINT"})
 
 
