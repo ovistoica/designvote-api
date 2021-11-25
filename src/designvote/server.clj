@@ -14,6 +14,8 @@
     (org.postgresql.util PGobject)
     (java.util UUID)))
 
+(clojure.pprint/pprint env)
+
 (defn app
   [env]
   (router/routes env))
