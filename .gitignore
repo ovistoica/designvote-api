@@ -16,3 +16,4 @@ dev/resources/config.edn
 .lsp/
 dev-config.edn
 resources/secrets.edn
+.clj-kondo/.cache
